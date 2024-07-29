@@ -3,7 +3,7 @@
 # ======================================================================================
 
 [project]
-name = "template_project"
+name = "topics_causal_inf"
 description = "Template for reproducible research projects in economics"
 requires-python = ">=3.11"
 dynamic = ["version"]
@@ -21,10 +21,10 @@ classifiers = [
     "Programming Language :: Python :: 3 :: Only",
 ]
 authors = [
-    { name = "JANE DOE", email = "janedoe@example-university.com" },
+    { name = "Julian Budde", email = "buddejul@gmail.com" },
 ]
 maintainers = [
-    { name = "JANE DOE", email = "janedoe@example-university.com" },
+    { name = "Julian Budde", email = "buddejul@gmail.com" },
 ]
 
 [project.readme]
@@ -35,10 +35,10 @@ content-type = "text/markdown"
 text = "MIT"
 
 [project.urls]
-Changelog = "https://github.com/OpenSourceEconomics/econ-project-templates"
-Documentation = "https://github.com/OpenSourceEconomics/econ-project-templates"
-Github = "https://github.com/OpenSourceEconomics/econ-project-templates"
-Tracker = "https://github.com/OpenSourceEconomics/econ-project-templates/issues"
+Changelog = "https://github.com/buddejul/topics_causal_inf"
+Documentation = "https://github.com/buddejul/topics_causal_inf"
+Github = "https://github.com/buddejul/topics_causal_inf"
+Tracker = "https://github.com/buddejul/topics_causal_inf/issues"
 
 # ======================================================================================
 # Build system configuration
@@ -49,7 +49,7 @@ requires = ["hatchling", "hatch_vcs"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.hooks.vcs]
-version-file = "src/template_project/_version.py"
+version-file = "src/topics_causal_inf/_version.py"
 
 [tool.hatch.build.targets.sdist]
 exclude = ["tests"]
@@ -70,7 +70,7 @@ allow-direct-references = true
 # ======================================================================================
 
 [tool.pytask.ini_options]
-paths = ["./src/template_project", "./documents"]
+paths = ["./src/topics_causal_inf", "./documents"]
 pdbcls = "pdbp:Pdb"
 
 # ======================================================================================

@@ -1,13 +1,13 @@
 ---
 
 name: Submit Question
-about: Ask a general question about template_project
+about: Ask a general question about topics_causal_inf
 title: "QST:"
 labels: "question"
 
 ---
 
-#### Question about template_project
+#### Question about topics_causal_inf
 
 **Note**: If you'd still like to submit a question, please read [this guide](
 https://matthewrocklin.com/blog/work/2018/02/28/minimal-bug-reports) detailing how to

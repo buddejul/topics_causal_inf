@@ -1,5 +1,5 @@
 ---
-name: template_project
+name: topics_causal_inf
 channels: [conda-forge, r, nodefaults]
 dependencies:
   - python ==3.12
@@ -35,4 +35,4 @@ dependencies:
   - r-forcats
 
   # Install project
-  - pip: [-e ., kaleido]
+  - pip: [-e ., kaleido==0.1.0.post1]

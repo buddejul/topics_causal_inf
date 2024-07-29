@@ -1,7 +1,7 @@
 ---
 
 name: Documentation Improvement
-about: Report wrong or missing documentation in template_project
+about: Report wrong or missing documentation in topics_causal_inf
 title: "DOC:"
 labels: "documentation"
 
