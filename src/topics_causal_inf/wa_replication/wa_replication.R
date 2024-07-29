@@ -90,6 +90,11 @@ args <- commandArgs(trailingOnly = TRUE)
 path_to_yaml <- args[length(args)]
 config <- yaml::yaml.load_file(path_to_yaml)
 
+n_sim <- config[["n_sim"]]
+n_obs <- config[["n_obs"]]
+dim <- config[["dim"]]
+return_grid <- config[["return_grid"]]
+
 # ======================================================================================
 # Main
 # ======================================================================================
@@ -121,12 +126,6 @@ p_dgp_beta <- function(x) {
 p_dgp_cons <- function(x) {
   return(rep(0.5, nrow(x)))
 }
-
-# Simulation
-n_sim <- config[["n_sim"]]
-n_obs <- config[["n_obs"]]
-dim <- config[["dim"]]
-return_grid <- config[["return_grid"]]
 
 if (config[["dgp"]] == "dgp1") {
   res <- simulation(n_sim, n_obs, dim, m_dgp_linear, t_dgp1, p_dgp_beta,

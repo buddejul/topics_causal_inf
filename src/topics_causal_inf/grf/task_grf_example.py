@@ -15,6 +15,7 @@ def task_grf_example_in_r(
     """Produce example figure using grf in R."""
 
 
+@pytask.mark.skip()
 @pytask.mark.r(
     script=SRC / "grf" / "bruhn_2016.R",
     serializer="yaml",
