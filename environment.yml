@@ -33,6 +33,10 @@ dependencies:
   - r-precommit
   - r-yaml
   - r-forcats
+  - r-grf
+  # TODO cannot install via mamba/conda for some reason?
+  # - r-httpgd  # Asynchronous http server graphics device for R.
+  - radian  # A 21 century R console
 
   # Install project
   - pip: [-e ., kaleido==0.1.0.post1]

@@ -39,3 +39,6 @@ docs_template/scripts/latex/*.png
 
 # local
 .vscode
+
+# jupyter notebooks
+*.ipynb
