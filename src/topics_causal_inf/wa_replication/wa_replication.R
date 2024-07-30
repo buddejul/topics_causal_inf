@@ -127,6 +127,28 @@ t_dgp3 <- function(x) {
   return(xi(x[, 1], a = 12, b = 1 / 2) * xi(x[, 2], a = 12, b = 1 / 2))
 }
 
+t_dgp4 <- function(x) {
+  return(
+    xi(x[, 1], a = 12, b = 1 / 2)
+    * xi(x[, 2], a = 12, b = 1 / 2)
+      * xi(x[, 3], a = 12, b = 1 / 2)
+      * xi(x[, 4], a = 12, b = 1 / 2)
+  )
+}
+
+t_dgp5 <- function(x) {
+  return(
+    xi(x[, 1], a = 12, b = 1 / 2)
+    * xi(x[, 2], a = 12, b = 1 / 2)
+      * xi(x[, 3], a = 12, b = 1 / 2)
+      * xi(x[, 4], a = 12, b = 1 / 2)
+      * xi(x[, 5], a = 12, b = 1 / 2)
+      * xi(x[, 6], a = 12, b = 1 / 2)
+      * xi(x[, 7], a = 12, b = 1 / 2)
+      * xi(x[, 8], a = 12, b = 1 / 2)
+  )
+}
+
 p_dgp_beta <- function(x) {
   return(0.25 * (1 + dbeta(x[, 1], 2, 4)))
 }
@@ -147,6 +169,16 @@ if (config[["dgp"]] == "dgp2") {
 }
 if (config[["dgp"]] == "dgp3") {
   res <- simulation(n_sim, n_obs, dim, m_dgp_cons, t_dgp3, p_dgp_cons,
+    return_grid = return_grid, num_trees = num_trees, sample_fraction = sample_fraction
+  )
+}
+if (config[["dgp"]] == "dgp4") {
+  res <- simulation(n_sim, n_obs, dim, m_dgp_cons, t_dgp4, p_dgp_cons,
+    return_grid = return_grid, num_trees = num_trees, sample_fraction = sample_fraction
+  )
+}
+if (config[["dgp"]] == "dgp5") {
+  res <- simulation(n_sim, n_obs, dim, m_dgp_cons, t_dgp5, p_dgp_cons,
     return_grid = return_grid, num_trees = num_trees, sample_fraction = sample_fraction
   )
 }
