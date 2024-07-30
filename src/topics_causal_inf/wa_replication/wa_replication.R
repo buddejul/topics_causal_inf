@@ -6,11 +6,12 @@ library(grf)
 
 # Simulation
 simulation <- function(
-    n_sim, n_obs, dim, main_effect, treatment_effect, propensity,
-    return_grid = FALSE) {
+    n_sim, n_obs, dim, main_effect, treatment_effect, propensity, num_trees,
+    sample_fraction, return_grid = FALSE) {
   # Run experiments
   if (return_grid == TRUE) {
-    return(experiment(n_obs, dim, main_effect, treatment_effect, propensity,
+    return(experiment(n_obs, dim, main_effect, treatment_effect, propensity, num_trees,
+      sample_fraction,
       return_grid = return_grid
     ))
   }
@@ -18,6 +19,8 @@ simulation <- function(
   mse <- rep(0, n_sim)
   for (i in 1:n_sim) {
     mse[i] <- experiment(n_obs, dim, main_effect, treatment_effect, propensity,
+      num_trees,
+      sample_fraction,
       return_grid = return_grid
     )
   }
@@ -27,14 +30,17 @@ simulation <- function(
 
 # Single experiment
 experiment <- function(
-    n_obs, dim, main_effect, treatment_effect, propensity,
+    n_obs, dim, main_effect, treatment_effect, propensity, num_trees, sample_fraction,
     return_grid = FALSE) {
   # Draw data
   data <- data(n_obs, dim, main_effect, treatment_effect, propensity)
   data_test <- data(n_obs, dim, main_effect, treatment_effect, propensity)
 
   # Fit causal forest
-  cf <- causal_forest(data$x, data$y, data$w, num.trees = 2000, sample.fraction = 0.5)
+  cf <- causal_forest(data$x, data$y, data$w,
+    num.trees = num_trees,
+    sample.fraction = sample_fraction
+  )
 
   if (!return_grid) {
     # Predict on test-data
@@ -94,6 +100,8 @@ n_sim <- config[["n_sim"]]
 n_obs <- config[["n_obs"]]
 dim <- config[["dim"]]
 return_grid <- config[["return_grid"]]
+num_trees <- config[["num_trees"]]
+sample_fraction <- config[["sample_fraction"]]
 
 # ======================================================================================
 # Main
@@ -129,17 +137,17 @@ p_dgp_cons <- function(x) {
 
 if (config[["dgp"]] == "dgp1") {
   res <- simulation(n_sim, n_obs, dim, m_dgp_linear, t_dgp1, p_dgp_beta,
-    return_grid = return_grid
+    return_grid = return_grid, num_trees = num_trees, sample_fraction = sample_fraction
   )
 }
 if (config[["dgp"]] == "dgp2") {
   res <- simulation(n_sim, n_obs, dim, m_dgp_cons, t_dgp2, p_dgp_cons,
-    return_grid = return_grid
+    return_grid = return_grid, num_trees = num_trees, sample_fraction = sample_fraction
   )
 }
 if (config[["dgp"]] == "dgp3") {
   res <- simulation(n_sim, n_obs, dim, m_dgp_cons, t_dgp3, p_dgp_cons,
-    return_grid = return_grid
+    return_grid = return_grid, num_trees = num_trees, sample_fraction = sample_fraction
   )
 }
 

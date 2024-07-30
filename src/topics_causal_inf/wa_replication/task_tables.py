@@ -3,15 +3,17 @@
 from pathlib import Path
 
 import pandas as pd  # type: ignore[import-untyped]
-import pyreadr
+import pyreadr  # type: ignore[import-untyped]
 import pytask
 
 from topics_causal_inf.config import BLD
-from topics_causal_inf.wa_replication.sim_config import DGP_VALS, DIM_VALS
+from topics_causal_inf.wa_replication.sim_config import DIM_VALS, SIMS_TO_RUN
+
+DGP_VALS = [sim.dgp for sim in SIMS_TO_RUN]
 
 RESULTS_PATHS = {
     dgp: [
-        BLD / "wa_replication" / f"wa_replication_{dgp}_dim{dim}.rds"
+        BLD / "wa_replication" / "sims" / f"wa_replication_{dgp}_dim{dim}.rds"
         for dim in DIM_VALS
     ]
     for dgp in DGP_VALS
@@ -23,7 +25,10 @@ for dgp in DGP_VALS:
     @pytask.task(id=f"{dgp}_table")
     def task_wa_replication_table(
         depends_on=RESULTS_PATHS[dgp],
-        produces: Path = BLD / "wa_replication" / f"wa_replication_{dgp}.tex",
+        produces: Path = BLD
+        / "wa_replication"
+        / "tables"
+        / f"wa_replication_{dgp}.tex",
     ):
         """Generate tables for the WA replication."""
         # Combine all results into a single dataframe
