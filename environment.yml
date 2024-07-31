@@ -23,7 +23,6 @@ dependencies:
   - statsmodels
   - numpy
   - pandas >=2.2
-  - pdbpp
   - plotly >=5.2.0,<6
 
   # R template project dependencies
@@ -38,5 +37,10 @@ dependencies:
   # - r-httpgd  # Asynchronous http server graphics device for R.
   - radian  # A 21 century R console
 
+  # Python dependencies
+  - scikit-learn
+  - statsmodels
+  - scipy
+
   # Install project
-  - pip: [-e ., kaleido==0.1.0.post1]
+  - pip: [-e ., kaleido==0.1.0.post1, formulaic, pdbp]
