@@ -6,6 +6,8 @@ from sklearn.ensemble import RandomForestRegressor  # type: ignore[import-untype
 from topics_causal_inf.config import RNG
 from topics_causal_inf.generic_ml.generic_ml import generic_ml, ml_proxy
 
+ML_LEARNER = (RandomForestRegressor(), RandomForestRegressor())
+
 
 def test_negative_pscore_raises_error():
     data = pd.DataFrame()
@@ -14,8 +16,8 @@ def test_negative_pscore_raises_error():
     data["z"] = RNG.normal(size=100)
     data["p_z"] = RNG.normal(loc=-10, size=100)
 
-    with pytest.raises(ValueError, match="Missing required covariates"):
-        generic_ml(data, 2, 0.05)
+    with pytest.raises(ValueError, match="Propensity score must be in the range"):
+        generic_ml(data, 2, 0.05, ml_learner=ML_LEARNER)
 
 
 def test_generic_ml_runs():
@@ -26,7 +28,7 @@ def test_generic_ml_runs():
     data["p_z"] = RNG.uniform(size=100)
 
     for strategy in ["blp_weighted_residual", "blp_ht_transform"]:
-        generic_ml(data, 2, 0.05, strategy=strategy)
+        generic_ml(data, 2, 0.05, strategy=strategy, ml_learner=ML_LEARNER)
 
 
 def test_generic_ml_returns_positive_param_se():
@@ -36,7 +38,7 @@ def test_generic_ml_returns_positive_param_se():
     data["z"] = RNG.normal(size=100)
     data["p_z"] = RNG.uniform(size=100)
 
-    out = generic_ml(data, 2, 0.05)
+    out = generic_ml(data, 2, 0.05, ml_learner=ML_LEARNER)
 
     assert (out["blp_se"] > 0).all()
 
@@ -48,10 +50,13 @@ def test_ml_proxy_predictions_not_constant():
     aux["z1"] = RNG.normal(size=10_000)
     aux["z2"] = RNG.normal(size=10_000)
 
-    b_z, s_z = ml_proxy(
+    ml_fitted_d0, ml_fitted_d1 = ml_proxy(
         aux,
         ml_learner=(RandomForestRegressor(), RandomForestRegressor()),
     )
 
-    assert b_z.var() > 0
-    assert s_z.var() > 0
+    b_z_pred = ml_fitted_d0.predict(aux.drop(columns=["y"]))
+    s_z_pred = ml_fitted_d1.predict(aux.drop(columns=["y"])) - b_z_pred
+
+    assert b_z_pred.var() > 0
+    assert s_z_pred.var() > 0

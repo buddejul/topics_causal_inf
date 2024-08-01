@@ -6,7 +6,6 @@ import statsmodels.api as sm  # type: ignore[import-untyped]
 from formulaic import model_matrix  # type: ignore[import-untyped]
 from scipy.stats import norm  # type: ignore[import-untyped]
 from sklearn.base import RegressorMixin  # type: ignore[import-untyped]
-from sklearn.ensemble import RandomForestRegressor  # type: ignore[import-untyped]
 from sklearn.model_selection import train_test_split  # type: ignore[import-untyped]
 
 
@@ -14,10 +13,7 @@ def generic_ml(
     data: pd.DataFrame,
     n_splits: int,
     alpha: float,
-    ml_learner: tuple[RegressorMixin, RegressorMixin] = (
-        RandomForestRegressor(),
-        RandomForestRegressor(),
-    ),
+    ml_learner: tuple[RegressorMixin, RegressorMixin],
     strategy: str = "blp_weighted_residual",
 ) -> dict[str, np.ndarray]:
     """GenericML interface."""
@@ -78,13 +74,15 @@ def estimate_single_split(
     # Split data into training and test set
     main, aux = train_test_split(data, test_size=0.5)
 
-    # Train ML proxies
-    b_z, s_z = ml_proxy(aux.drop(columns=["p_z"]), ml_learner)
+    # Train ML proxies and predict on main sample
+    ml_fitted_d0, ml_fitted_d1 = ml_proxy(aux.drop(columns=["p_z"]), ml_learner)
+
+    main["b_z"] = ml_fitted_d0.predict(main.drop(columns=["y", "p_z"]))
+    main["s_z"] = (
+        ml_fitted_d1.predict(main.drop(columns=["y", "p_z", "b_z"])) - main["b_z"]
+    )
 
     # Estimate BLP parameters
-    main["b_z"] = b_z
-    main["s_z"] = s_z
-
     if strategy == "blp_weighted_residual":
         res = blp_weighted_residual(main)
         blp_params = ["d - p_z", "d - p_z:center(s_z)"]
@@ -101,27 +99,24 @@ def estimate_single_split(
 def ml_proxy(
     data: pd.DataFrame,
     ml_learner: tuple[RegressorMixin, RegressorMixin],
-) -> tuple[np.ndarray, np.ndarray]:
+) -> tuple[RegressorMixin, RegressorMixin]:
     """Train ML proxies for BCA and CATE."""
     # Fit for untreated (d == 0)
     model0 = ml_learner[0]
     model1 = ml_learner[1]
 
-    res_d0 = model0.fit(
+    ml_fitted_d0 = model0.fit(
         data[data["d"] == 0].drop(columns="y"),
         data[data["d"] == 0]["y"],
     )
-    b_z = res_d0.predict(data.drop(columns="y"))
 
     # Fit for treated (d == 1)
-    res_d1 = model1.fit(
+    ml_fitted_d1 = model1.fit(
         data[data["d"] == 1].drop(columns="y"),
         data[data["d"] == 1]["y"],
     )
 
-    s_z = res_d1.predict(data.drop(columns="y")) - b_z
-
-    return b_z, s_z
+    return ml_fitted_d0, ml_fitted_d1
 
 
 def blp_weighted_residual(

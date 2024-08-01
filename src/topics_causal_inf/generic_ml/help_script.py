@@ -1,10 +1,15 @@
 import numpy as np
 import pandas as pd  # type: ignore[import-untyped]
+from sklearn.linear_model import (  # type: ignore[import-untyped]
+    ElasticNetCV,
+)
 
 from topics_causal_inf.config import RNG
 from topics_causal_inf.generic_ml.generic_ml import generic_ml
 
 N_SPLITS = 1
+
+ML_LEARNER = (ElasticNetCV(), ElasticNetCV())
 
 data = pd.DataFrame()
 
@@ -17,7 +22,13 @@ data["p_z"] = np.ones(n_obs) * 0.5
 data["z1"] = RNG.normal(size=n_obs)
 data["z2"] = RNG.normal(size=n_obs)
 
-res = generic_ml(data, n_splits=N_SPLITS, alpha=0.05, strategy="blp_ht_transform")
+res_nohet = generic_ml(
+    data,
+    n_splits=N_SPLITS,
+    alpha=0.05,
+    strategy="blp_ht_transform",
+    ml_learner=ML_LEARNER,
+)
 
 # ======================================================================================
 # DGP with heterogeneous treatment effects
@@ -42,4 +53,10 @@ def _cate(data):
 
 data["y"] = RNG.normal(size=n_obs) + data["d"] * tau + data["d"] * _cate(data)
 
-res = generic_ml(data, n_splits=N_SPLITS, alpha=0.05, strategy="blp_ht_transform")
+res_het = generic_ml(
+    data,
+    n_splits=N_SPLITS,
+    alpha=0.05,
+    strategy="blp_ht_transform",
+    ml_learner=ML_LEARNER,
+)
