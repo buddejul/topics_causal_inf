@@ -8,6 +8,8 @@ from scipy.stats import norm  # type: ignore[import-untyped]
 from sklearn.base import RegressorMixin  # type: ignore[import-untyped]
 from sklearn.model_selection import train_test_split  # type: ignore[import-untyped]
 
+from topics_causal_inf.classes import GenericMLResult
+
 
 def generic_ml(
     data: pd.DataFrame,
@@ -15,7 +17,7 @@ def generic_ml(
     alpha: float,
     ml_learner: tuple[RegressorMixin, RegressorMixin],
     strategy: str = "blp_weighted_residual",
-) -> dict[str, np.ndarray]:
+) -> GenericMLResult:
     """GenericML interface."""
     # Input checks
     _check_strategy(strategy)
@@ -46,16 +48,16 @@ def generic_ml(
     )[0][0]
 
     # Collapse to median
-    return {
-        "blp_params": np.median(blp_params, axis=0),
-        "blp_se": np.median(blp_se, axis=0),
-        "blp_tvals": np.median(blp_tvals, axis=0),
-        "blp_pvals": np.median(blp_pvals, axis=0),
-        "blp_ci_lo": np.median(blp_ci_lo, axis=0),
-        "blp_ci_hi": np.median(blp_ci_hi, axis=0),
-        "ml_fitted_d0": ml_fitted_d0[int(pos)],
-        "ml_fitted_d1": ml_fitted_d1[int(pos)],
-    }
+    return GenericMLResult(
+        blp_params=np.median(blp_params, axis=0),
+        blp_se=np.median(blp_se, axis=0),
+        blp_tvals=np.median(blp_tvals, axis=0),
+        blp_pvals=np.median(blp_pvals, axis=0),
+        blp_ci_lo=np.median(blp_ci_lo, axis=0),
+        blp_ci_hi=np.median(blp_ci_hi, axis=0),
+        ml_fitted_d0=ml_fitted_d0[int(pos)],
+        ml_fitted_d1=ml_fitted_d1[int(pos)],
+    )
 
 
 def inference_algorithm(

@@ -10,6 +10,7 @@ from topics_causal_inf.wa_replication.sim_config import DIM_VALS, SIMS_TO_RUN
 for sim in SIMS_TO_RUN:
     for dim in DIM_VALS:
 
+        @pytask.mark.skip()
         @pytask.task(
             kwargs={"dim": dim, "return_grid": True, **sim._asdict()},
             id=f"{sim.dgp}_dim{dim}",

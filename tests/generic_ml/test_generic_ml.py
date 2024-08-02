@@ -5,6 +5,7 @@ import pytest
 from sklearn.ensemble import RandomForestRegressor  # type: ignore[import-untyped]
 from topics_causal_inf.config import RNG
 from topics_causal_inf.generic_ml.generic_ml import generic_ml, ml_proxy
+from topics_causal_inf.generic_ml.simulation import simulation
 
 ML_LEARNER = (RandomForestRegressor(), RandomForestRegressor())
 
@@ -40,7 +41,7 @@ def test_generic_ml_returns_positive_param_se():
 
     out = generic_ml(data, 2, 0.05, ml_learner=ML_LEARNER)
 
-    assert (out["blp_se"] > 0).all()
+    assert (out.blp_se > 0).all()
 
 
 def test_ml_proxy_predictions_not_constant():
@@ -60,3 +61,7 @@ def test_ml_proxy_predictions_not_constant():
 
     assert b_z_pred.var() > 0
     assert s_z_pred.var() > 0
+
+
+def test_simulation_runs():
+    simulation(10, 1_000, 10, "dgp1", 2, ML_LEARNER, RNG)

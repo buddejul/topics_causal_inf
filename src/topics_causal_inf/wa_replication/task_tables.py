@@ -21,7 +21,7 @@ RESULTS_PATHS = {
 
 for dgp in DGP_VALS:
     # Generate list of all paths corresponding to a dgp and each value of dim
-
+    @pytask.mark.skip()
     @pytask.task(id=f"{dgp}_table")
     def task_wa_replication_table(
         depends_on=RESULTS_PATHS[dgp],

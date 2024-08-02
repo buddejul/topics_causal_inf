@@ -6,6 +6,8 @@ from sklearn.base import RegressorMixin  # type: ignore[import-untyped]
 
 from topics_causal_inf.generic_ml.generic_ml import generic_ml
 from topics_causal_inf.utilities import (
+    _tau_constant,
+    _tau_heterogeneous,
     data_wager_athey_2018,
 )
 
@@ -32,7 +34,7 @@ def simulation(
             rng=rng,
         )
 
-    out = pd.DataFrame(mse, columns="mse")
+    out = pd.DataFrame(mse, columns=["mse"])
 
     out["dgp"] = dgp
     out["n_obs"] = n_obs
@@ -56,7 +58,17 @@ def _single_experiment(
 
     # Draw evaluation data and calculate rmse using linear prediction based on res
     data_eval = data_wager_athey_2018(n_obs=n_obs, dim=dim, dgp=dgp, rng=rng)
+    data_eval = data_eval.drop(columns=["y", "p_z"])
 
-    data_eval["pred"] = 1
+    data_eval["pred"] = res.ml_fitted_d1.predict(data_eval) - res.ml_fitted_d1.predict(
+        data_eval,
+    )
 
-    return res
+    if dgp == "dgp1":
+        data_eval["true"] = _tau_constant(data_eval, 0)
+    elif dgp == "dgp2":
+        data_eval["true"] = _tau_heterogeneous(data_eval, 20, 1 / 3)
+    elif dgp == "dgp3":
+        data_eval["true"] = _tau_heterogeneous(data_eval, 12, 1 / 2)
+
+    return np.mean((data_eval["pred"] - data_eval["true"]) ** 2)
