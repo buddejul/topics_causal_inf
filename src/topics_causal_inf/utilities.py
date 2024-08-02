@@ -4,16 +4,20 @@ import numpy as np
 import pandas as pd  # type: ignore[import-untyped]
 from scipy.stats import beta  # type: ignore[import-untyped]
 
-from topics_causal_inf.config import RNG
 
-
-def data_wager_athey_2018(n_obs: int, dim: int, dgp: str) -> pd.DataFrame:
+def data_wager_athey_2018(
+    n_obs: int,
+    dim: int,
+    dgp: str,
+    rng: np.random.Generator,
+) -> pd.DataFrame:
     """Simulate data from one of the DGPs in Wager and Athey 2018 JASA.
 
     Arguments:
         n_obs: Number of observations.
         dim: number of covariates (ambient dimension).
         dgp: DGP to simulate data from.
+        rng: Random number generator.
 
     Returns:
         pd.DataFrame: Simulated data.
@@ -21,7 +25,7 @@ def data_wager_athey_2018(n_obs: int, dim: int, dgp: str) -> pd.DataFrame:
     out = pd.DataFrame(index=range(n_obs))
 
     for i in range(dim):
-        out[f"x{i}"] = RNG.uniform(size=n_obs)
+        out[f"x{i}"] = rng.uniform(size=n_obs)
 
     if dgp == "dgp1":
         main = _main_linear(out)
@@ -39,9 +43,9 @@ def data_wager_athey_2018(n_obs: int, dim: int, dgp: str) -> pd.DataFrame:
         tau = _tau_heterogeneous(out, 12, 1 / 2)
 
     out["p_z"] = prop
-    out["d"] = RNG.binomial(1, prop)
+    out["d"] = rng.binomial(1, prop)
 
-    out["y"] = main + tau * out["d"] + RNG.normal(size=n_obs)
+    out["y"] = main + tau * out["d"] + rng.normal(size=n_obs)
 
     return out
 

@@ -25,13 +25,25 @@ def generic_ml(
     # Prepare inputs
 
     # Inference algorithm
-    blp_params, blp_se = inference_algorithm(data, n_splits, strategy, ml_learner)
+    blp_params, blp_se, ml_fitted_d0, ml_fitted_d1 = inference_algorithm(
+        data,
+        n_splits,
+        strategy,
+        ml_learner,
+    )
 
     # Compute t-values, lower and upper (1-alpha) confidence intervals
     blp_tvals = blp_params / blp_se
     blp_pvals = 2 * (1 - norm.cdf(np.abs(blp_tvals)))
     blp_ci_lo = blp_params - norm.ppf(1 - alpha / 2) * blp_se
     blp_ci_hi = blp_params + norm.ppf(1 - alpha / 2) * blp_se
+
+    # Find position of median of alpha_1 to pick a "median" machine learner
+    # Choose closest observation to force median is element of the set
+    pos = np.argwhere(
+        blp_params[:, 1]
+        == np.percentile(blp_params[:, 1], q=50, method="closest_observation"),
+    )[0][0]
 
     # Collapse to median
     return {
@@ -41,6 +53,8 @@ def generic_ml(
         "blp_pvals": np.median(blp_pvals, axis=0),
         "blp_ci_lo": np.median(blp_ci_lo, axis=0),
         "blp_ci_hi": np.median(blp_ci_hi, axis=0),
+        "ml_fitted_d0": ml_fitted_d0[int(pos)],
+        "ml_fitted_d1": ml_fitted_d1[int(pos)],
     }
 
 
@@ -49,27 +63,35 @@ def inference_algorithm(
     n_splits: int,
     strategy: str,
     ml_learner: tuple[RegressorMixin, RegressorMixin],
-) -> tuple[np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray, list[RegressorMixin], list[RegressorMixin]]:
     """Implements the inference algorithm; see Algorithm 1 in the paper."""
     blp_params = np.zeros((n_splits, 2))
     blp_se = np.zeros((n_splits, 2))
     lambda_hat = np.zeros(n_splits)
+    ml_fitted_d0 = list(np.zeros(n_splits))
+    ml_fitted_d1 = list(np.zeros(n_splits))
 
     for i in range(n_splits):
-        blp_params[i, :], blp_se[i, :], lambda_hat[i] = estimate_single_split(
+        (
+            blp_params[i, :],
+            blp_se[i, :],
+            lambda_hat[i],
+            ml_fitted_d0[i],
+            ml_fitted_d1[i],
+        ) = estimate_single_split(
             data,
             strategy,
             ml_learner,
         )
 
-    return blp_params, blp_se
+    return blp_params, blp_se, ml_fitted_d0, ml_fitted_d1
 
 
 def estimate_single_split(
     data: pd.DataFrame,
     strategy: str,
     ml_learner: tuple[RegressorMixin, RegressorMixin],
-) -> tuple[np.ndarray, np.ndarray, float]:
+) -> tuple[np.ndarray, np.ndarray, float, RegressorMixin, RegressorMixin]:
     """Estimate BLP parameters for a single split."""
     # Split data into training and test set
     main, aux = train_test_split(data, test_size=0.5)
@@ -93,7 +115,13 @@ def estimate_single_split(
 
     lambda_hat = fit_measure_cate(res.params[blp_params[1]], main, "blp")
 
-    return res.params[blp_params], res.HC3_se[blp_params], lambda_hat
+    return (
+        res.params[blp_params],
+        res.HC3_se[blp_params],
+        lambda_hat,
+        ml_fitted_d0,
+        ml_fitted_d1,
+    )
 
 
 def ml_proxy(
