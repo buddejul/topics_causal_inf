@@ -6,14 +6,19 @@ from typing import Annotated, NamedTuple
 import numpy as np
 from pytask import Product, task
 from sklearn.base import RegressorMixin  # type: ignore[import-untyped]
-from sklearn.ensemble import RandomForestRegressor  # type: ignore[import-untyped]
+from sklearn.linear_model import (  # type: ignore[import-untyped]
+    ElasticNetCV,
+)
 
 from topics_causal_inf.config import BLD, RNG
 from topics_causal_inf.generic_ml.simulation import simulation
+from topics_causal_inf.wa_replication.sim_config import DIM_VALS
 
 N_OBS = 10_000
 N_SIMS = 10
-N_SPLITS = 10
+N_SPLITS = 250
+
+DGP_TO_RUN = ["dgp3", "dgp4", "dgp5"]
 
 
 class _Arguments(NamedTuple):
@@ -28,13 +33,14 @@ class _Arguments(NamedTuple):
 
 
 ID_TO_KWARGS = {
-    dgp: _Arguments(
-        dim=10,
+    f"genml_{dgp}_{dim}": _Arguments(
+        dim=dim,
         dgp=dgp,
-        path_to_res=BLD / "generic_ml" / "sims" / f"generic_ml_{dgp}_dim10.rds",
-        ml_learner=(RandomForestRegressor(), RandomForestRegressor()),
+        path_to_res=BLD / "generic_ml" / "sims" / f"generic_ml_{dgp}_dim{dim}.pkl",
+        ml_learner=(ElasticNetCV(), ElasticNetCV()),
     )
-    for dgp in ["dgp1", "dgp2", "dgp3"]
+    for dgp in DGP_TO_RUN
+    for dim in DIM_VALS
 }
 
 for id_, kwargs in ID_TO_KWARGS.items():

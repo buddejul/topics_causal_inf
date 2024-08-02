@@ -7,7 +7,7 @@ from sklearn.base import RegressorMixin  # type: ignore[import-untyped]
 from topics_causal_inf.generic_ml.generic_ml import generic_ml
 from topics_causal_inf.utilities import (
     _tau_constant,
-    _tau_heterogeneous,
+    _tau_heterog,
     data_wager_athey_2018,
 )
 
@@ -60,15 +60,41 @@ def _single_experiment(
     data_eval = data_wager_athey_2018(n_obs=n_obs, dim=dim, dgp=dgp, rng=rng)
     data_eval = data_eval.drop(columns=["y", "p_z"])
 
-    data_eval["pred"] = res.ml_fitted_d1.predict(data_eval) - res.ml_fitted_d1.predict(
+    data_eval["s_z"] = res.ml_fitted_d1.predict(data_eval) - res.ml_fitted_d1.predict(
         data_eval,
     )
+
+    data_eval["pred"] = res.blp_params[0] + res.blp_params[1] * data_eval["s_z"]
 
     if dgp == "dgp1":
         data_eval["true"] = _tau_constant(data_eval, 0)
     elif dgp == "dgp2":
-        data_eval["true"] = _tau_heterogeneous(data_eval, 20, 1 / 3)
+        data_eval["true"] = _tau_heterog(
+            data_eval,
+            x_range=np.arange(1, 3),
+            a=20,
+            b=1 / 3,
+        )
     elif dgp == "dgp3":
-        data_eval["true"] = _tau_heterogeneous(data_eval, 12, 1 / 2)
+        data_eval["true"] = _tau_heterog(
+            data_eval,
+            x_range=np.arange(1, 3),
+            a=12,
+            b=1 / 2,
+        )
+    elif dgp == "dgp4":
+        data_eval["true"] = _tau_heterog(
+            data_eval,
+            x_range=np.arange(1, 5),
+            a=12,
+            b=1 / 2,
+        )
+    elif dgp == "dgp5":
+        data_eval["true"] = _tau_heterog(
+            data_eval,
+            x_range=np.arange(1, 9),
+            a=12,
+            b=1 / 2,
+        )
 
     return np.mean((data_eval["pred"] - data_eval["true"]) ** 2)

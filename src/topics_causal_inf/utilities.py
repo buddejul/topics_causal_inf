@@ -35,12 +35,12 @@ def data_wager_athey_2018(
     if dgp == "dgp2":
         main = _main_constant(out, 0)
         prop = _prop_cons(out, 0.5)
-        tau = _tau_heterogeneous(out, 20, 1 / 3)
+        tau = _tau_heterog(out, x_range=np.arange(1, 3), a=20, b=1 / 3)
 
     if dgp == "dgp3":
         main = _main_constant(out, 0)
         prop = _prop_cons(out, 0.5)
-        tau = _tau_heterogeneous(out, 12, 1 / 2)
+        tau = _tau_heterog(out, x_range=np.arange(1, 3), a=12, b=1 / 2)
 
     out["p_z"] = prop
     out["d"] = rng.binomial(1, prop)
@@ -51,7 +51,7 @@ def data_wager_athey_2018(
 
 
 def _tau_constant(data: pd.DataFrame, tau: float) -> np.ndarray:
-    """Dment effect: tau(x) = 0."""
+    """Treatment effect: tau(x) = 0."""
     return np.ones(data.shape[0]) * tau
 
 
@@ -80,6 +80,24 @@ def _prop_cons(data: pd.DataFrame, prop: float) -> np.ndarray:
     return np.ones(data.shape[0]) * prop
 
 
-def _tau_heterogeneous(data: pd.DataFrame, a: float, b: float) -> np.ndarray:
-    """Dment effect: tau(x) = xi(x_1) * xi(x_2)."""
-    return _xi(data["x1"], a, b) * _xi(data["x2"], a, b)
+def _tau_heterog(
+    data: pd.DataFrame,
+    x_range: np.ndarray,
+    a: float,
+    b: float,
+) -> np.ndarray:
+    """Treatment effect: tau(x) = xi(x_1) * xi(x_2).
+
+    Arguments:
+        data: Data.
+        x_range: Range of covariates to apply the treatment effect.
+        a: Parameter a.
+        b: Parameter b.
+
+    Returns:
+        np.ndarray: Treatment effect.
+    """
+    tau = np.ones(data.shape[0])
+    for i in x_range:
+        tau = tau * _xi(data[f"x{i}"], a, b)
+    return tau
