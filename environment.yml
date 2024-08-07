@@ -21,7 +21,7 @@ dependencies:
 
   # Python template project dependencies
   - statsmodels
-  - numpy
+  - numpy<2
   - pandas >=2.2
   - plotly >=5.2.0,<6
 
@@ -41,6 +41,13 @@ dependencies:
   - scikit-learn
   - statsmodels
   - scipy
+  - pyarrow
 
   # Install project
-  - pip: [-e ., kaleido==0.1.0.post1, formulaic, pdbp]
+  - pip:
+      - -e .
+      - kaleido==0.1.0.post1
+      - formulaic
+      - pdbp
+      - snakeviz
+      - git+https://github.com/gsbDBI/ds-wgan

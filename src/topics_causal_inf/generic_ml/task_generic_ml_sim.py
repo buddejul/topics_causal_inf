@@ -6,17 +6,15 @@ from typing import Annotated, NamedTuple
 import numpy as np
 from pytask import Product, task
 from sklearn.base import RegressorMixin  # type: ignore[import-untyped]
-from sklearn.linear_model import (  # type: ignore[import-untyped]
-    ElasticNetCV,
-)
+from sklearn.ensemble import RandomForestRegressor  # type: ignore[import-untyped]
 
 from topics_causal_inf.config import BLD, RNG
 from topics_causal_inf.generic_ml.simulation import simulation
 from topics_causal_inf.wa_replication.sim_config import DIM_VALS
 
 N_OBS = 10_000
-N_SIMS = 10
-N_SPLITS = 250
+N_SIMS = 20
+N_SPLITS = 50
 
 DGP_TO_RUN = ["dgp3", "dgp4", "dgp5"]
 
@@ -37,10 +35,11 @@ ID_TO_KWARGS = {
         dim=dim,
         dgp=dgp,
         path_to_res=BLD / "generic_ml" / "sims" / f"generic_ml_{dgp}_dim{dim}.pkl",
-        ml_learner=(ElasticNetCV(), ElasticNetCV()),
+        ml_learner=(RandomForestRegressor(), RandomForestRegressor()),
     )
     for dgp in DGP_TO_RUN
     for dim in DIM_VALS
+    if not (dgp == "dgp5" and dim < 8)  # noqa: PLR2004
 }
 
 for id_, kwargs in ID_TO_KWARGS.items():

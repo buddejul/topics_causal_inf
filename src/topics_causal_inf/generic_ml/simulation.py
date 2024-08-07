@@ -39,6 +39,7 @@ def simulation(
     out["dgp"] = dgp
     out["n_obs"] = n_obs
     out["n_sims"] = n_sims
+    out["dim"] = dim
 
     return out
 
@@ -71,28 +72,28 @@ def _single_experiment(
     elif dgp == "dgp2":
         data_eval["true"] = _tau_heterog(
             data_eval,
-            x_range=np.arange(1, 3),
+            x_range=np.arange(0, 2),
             a=20,
             b=1 / 3,
         )
     elif dgp == "dgp3":
         data_eval["true"] = _tau_heterog(
             data_eval,
-            x_range=np.arange(1, 3),
+            x_range=np.arange(0, 2),
             a=12,
             b=1 / 2,
         )
     elif dgp == "dgp4":
         data_eval["true"] = _tau_heterog(
             data_eval,
-            x_range=np.arange(1, 5),
+            x_range=np.arange(0, 4),
             a=12,
             b=1 / 2,
         )
     elif dgp == "dgp5":
         data_eval["true"] = _tau_heterog(
             data_eval,
-            x_range=np.arange(1, 9),
+            x_range=np.arange(0, 8),
             a=12,
             b=1 / 2,
         )

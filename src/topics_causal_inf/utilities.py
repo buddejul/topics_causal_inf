@@ -35,12 +35,22 @@ def data_wager_athey_2018(
     if dgp == "dgp2":
         main = _main_constant(out, 0)
         prop = _prop_cons(out, 0.5)
-        tau = _tau_heterog(out, x_range=np.arange(1, 3), a=20, b=1 / 3)
+        tau = _tau_heterog(out, x_range=np.arange(0, 2), a=20, b=1 / 3)
 
     if dgp == "dgp3":
         main = _main_constant(out, 0)
         prop = _prop_cons(out, 0.5)
-        tau = _tau_heterog(out, x_range=np.arange(1, 3), a=12, b=1 / 2)
+        tau = _tau_heterog(out, x_range=np.arange(0, 2), a=12, b=1 / 2)
+
+    if dgp == "dgp4":
+        main = _main_constant(out, 0)
+        prop = _prop_cons(out, 0.5)
+        tau = _tau_heterog(out, x_range=np.arange(0, 4), a=12, b=1 / 2)
+
+    if dgp == "dgp5":
+        main = _main_constant(out, 0)
+        prop = _prop_cons(out, 0.5)
+        tau = _tau_heterog(out, x_range=np.arange(0, 8), a=12, b=1 / 2)
 
     out["p_z"] = prop
     out["d"] = rng.binomial(1, prop)

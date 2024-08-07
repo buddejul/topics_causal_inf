@@ -64,4 +64,5 @@ def test_ml_proxy_predictions_not_constant():
 
 
 def test_simulation_runs():
-    simulation(10, 1_000, 10, "dgp1", 2, ML_LEARNER, RNG)
+    for dgp in ["dgp1", "dgp2", "dgp3", "dgp4", "dgp5"]:
+        simulation(2, 1_000, 10, dgp, 2, ML_LEARNER, RNG)

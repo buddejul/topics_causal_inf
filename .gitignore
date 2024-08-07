@@ -42,3 +42,6 @@ docs_template/scripts/latex/*.png
 
 # jupyter notebooks
 *.ipynb
+
+# profiling
+*.prof
