@@ -45,3 +45,6 @@ docs_template/scripts/latex/*.png
 
 # profiling
 *.prof
+
+# feather (e.g. dataframes used for wgan in colab)
+*.feather

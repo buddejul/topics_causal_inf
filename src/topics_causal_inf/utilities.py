@@ -1,8 +1,11 @@
 """Utilities used throughout the project."""
 
+from copy import copy
+
 import numpy as np
 import pandas as pd  # type: ignore[import-untyped]
 from scipy.stats import beta  # type: ignore[import-untyped]
+from wgan import DataWrapper, Generator  # type: ignore[import-untyped]
 
 
 def data_wager_athey_2018(
@@ -111,3 +114,49 @@ def _tau_heterog(
     for i in x_range:
         tau = tau * _xi(data[f"x{i}"], a, b)
     return tau
+
+
+# TODO(@buddejul): Change df.sample to use RNG. #noqa: TD003, FIX002
+def data_wgan(
+    n_obs: int,
+    pop_data: pd.DataFrame,
+    data_wrappers: DataWrapper,
+    generators: Generator,
+) -> pd.DataFrame:
+    """Draw data based on ds-wgan generator.
+
+    Arguments:
+        n_obs: Number of observations.
+        dgp: DGP to simulate data from.
+        pop_data: Population data used to train the generator.
+        data_wrappers: Data wrappers used to apply the generator.
+        generators: Generators used to generate data.
+
+    Returns:
+        pd.DataFrame: Simulated data.
+    """
+    # Simulate data
+    # simulate data with conditional WGANs
+    df_generated = data_wrappers[0].apply_generator(
+        generators[0],
+        pop_data.sample(int(n_obs), replace=True),
+    )
+    df_generated = data_wrappers[1].apply_generator(generators[1], df_generated)
+
+    # add counterfactual outcomes
+    df_generated_cf = copy(df_generated)
+    df_generated_cf["t"] = 1 - df_generated_cf["t"]
+    df_generated["y_cf"] = data_wrappers[1].apply_generator(
+        generators[1],
+        df_generated_cf,
+    )["y"]
+
+    # Generate treatment effect: "y" - "y_cf" if "t" == 1 else "y_cf" - "y"
+    df_generated["tau"] = df_generated["y"] - df_generated["y_cf"]
+    df_generated["tau"] = np.where(
+        df_generated["t"] == 1,
+        df_generated["tau"],
+        -df_generated["tau"],
+    )
+
+    return df_generated

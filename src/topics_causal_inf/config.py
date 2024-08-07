@@ -9,6 +9,7 @@ ROOT = SRC.joinpath("..", "..").resolve()
 
 BLD = ROOT.joinpath("bld").resolve()
 
+WGAN_GEN = SRC / "wgan_generated"
 
 DOCUMENTS = ROOT.joinpath("documents").resolve()
 
