@@ -4,10 +4,12 @@ from pathlib import Path
 from typing import Annotated, NamedTuple
 
 import numpy as np
+import pytask
 from pytask import Product, task
 from sklearn.base import RegressorMixin  # type: ignore[import-untyped]
 from sklearn.ensemble import RandomForestRegressor  # type: ignore[import-untyped]
 
+from topics_causal_inf.classes import DGP
 from topics_causal_inf.config import BLD, RNG
 from topics_causal_inf.generic_ml.simulation import simulation
 from topics_causal_inf.wa_replication.sim_config import DIM_VALS
@@ -44,10 +46,11 @@ ID_TO_KWARGS = {
 
 for id_, kwargs in ID_TO_KWARGS.items():
 
+    @pytask.mark.skip()
     @task(id=id_, kwargs=kwargs)  # type: ignore[arg-type]
     def task_generic_ml_simulation(
         dim: int,
-        dgp: str,
+        dgp: DGP,
         n_obs: int,
         n_sims: int,
         n_splits: int,

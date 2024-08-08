@@ -4,10 +4,9 @@ import numpy as np
 import pandas as pd  # type: ignore[import-untyped]
 from sklearn.base import RegressorMixin  # type: ignore[import-untyped]
 
+from topics_causal_inf.classes import DGP
 from topics_causal_inf.generic_ml.generic_ml import generic_ml
 from topics_causal_inf.utilities import (
-    _tau_constant,
-    _tau_heterog,
     data_wager_athey_2018,
 )
 
@@ -16,7 +15,7 @@ def simulation(
     n_sims: int,
     n_obs: int,
     dim: int,
-    dgp: str,
+    dgp: DGP,
     n_splits: int,
     ml_learner: tuple[RegressorMixin, RegressorMixin],
     rng: np.random.Generator,
@@ -36,7 +35,7 @@ def simulation(
 
     out = pd.DataFrame(mse, columns=["mse"])
 
-    out["dgp"] = dgp
+    out["dgp"] = dgp.name
     out["n_obs"] = n_obs
     out["n_sims"] = n_sims
     out["dim"] = dim
@@ -48,7 +47,7 @@ def _single_experiment(
     n_obs: int,
     dim: int,
     n_splits: int,
-    dgp: str,
+    dgp: DGP,
     ml_learner: tuple[RegressorMixin, RegressorMixin],
     rng: np.random.Generator,
 ) -> pd.DataFrame:
@@ -67,35 +66,6 @@ def _single_experiment(
 
     data_eval["pred"] = res.blp_params[0] + res.blp_params[1] * data_eval["s_z"]
 
-    if dgp == "dgp1":
-        data_eval["true"] = _tau_constant(data_eval, 0)
-    elif dgp == "dgp2":
-        data_eval["true"] = _tau_heterog(
-            data_eval,
-            x_range=np.arange(0, 2),
-            a=20,
-            b=1 / 3,
-        )
-    elif dgp == "dgp3":
-        data_eval["true"] = _tau_heterog(
-            data_eval,
-            x_range=np.arange(0, 2),
-            a=12,
-            b=1 / 2,
-        )
-    elif dgp == "dgp4":
-        data_eval["true"] = _tau_heterog(
-            data_eval,
-            x_range=np.arange(0, 4),
-            a=12,
-            b=1 / 2,
-        )
-    elif dgp == "dgp5":
-        data_eval["true"] = _tau_heterog(
-            data_eval,
-            x_range=np.arange(0, 8),
-            a=12,
-            b=1 / 2,
-        )
+    data_eval["true"] = dgp.treatment_effect(data_eval)
 
     return np.mean((data_eval["pred"] - data_eval["true"]) ** 2)

@@ -51,3 +51,5 @@ dependencies:
       - pdbp
       - snakeviz
       - git+https://github.com/gsbDBI/ds-wgan
+      - econml
+      - ipywidgets

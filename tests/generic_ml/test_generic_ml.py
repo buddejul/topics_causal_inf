@@ -4,6 +4,7 @@ import pandas as pd  # type: ignore[import-untyped]
 import pytest
 from sklearn.ensemble import RandomForestRegressor  # type: ignore[import-untyped]
 from topics_causal_inf.config import RNG
+from topics_causal_inf.define_dgps import DGPS
 from topics_causal_inf.generic_ml.generic_ml import generic_ml, ml_proxy
 from topics_causal_inf.generic_ml.simulation import simulation
 
@@ -64,5 +65,5 @@ def test_ml_proxy_predictions_not_constant():
 
 
 def test_simulation_runs():
-    for dgp in ["dgp1", "dgp2", "dgp3", "dgp4", "dgp5"]:
+    for dgp in DGPS:
         simulation(2, 1_000, 10, dgp, 2, ML_LEARNER, RNG)

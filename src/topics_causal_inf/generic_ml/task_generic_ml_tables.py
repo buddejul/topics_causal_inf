@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Annotated, NamedTuple
 
 import pandas as pd  # type: ignore[import-untyped]
+import pytask
 from pytask import Product, task
 
 from topics_causal_inf.config import BLD
@@ -32,6 +33,7 @@ ID_TO_KWARGS = {
 
 for id_, kwargs in ID_TO_KWARGS.items():
 
+    @pytask.mark.skip()
     @task(id=id_, kwargs=kwargs)  # type: ignore[arg-type]
     def task_generic_ml_tables(
         dgp: str,
