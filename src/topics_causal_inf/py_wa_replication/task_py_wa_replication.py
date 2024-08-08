@@ -5,7 +5,6 @@ from pathlib import Path
 from typing import Annotated, NamedTuple
 
 import numpy as np
-import pandas as pd  # type: ignore[import-untyped]
 from pytask import Product, task
 from wgan import DataWrapper, Generator  # type: ignore[import-untyped]
 
@@ -25,7 +24,6 @@ class _Arguments(NamedTuple):
     n_obs: int = 10_000
     dim: int = 10
     data_generator: str = "standard"
-    pop_data: pd.DataFrame | None = None
     generators: list[Generator] | None = None
     data_wrappers: list[DataWrapper] | None = None
     rng: np.random.Generator = RNG
@@ -60,7 +58,6 @@ for id_, kwargs in ID_TO_KWARGS.items():
         rng: np.random.Generator,
         num_trees: int,
         sample_fraction: float,
-        pop_data: pd.DataFrame | None,
         generators: list[Generator] | None,
         data_wrappers: list[DataWrapper] | None,
     ) -> None:

@@ -16,7 +16,7 @@ def simulation(
     dgp: DGP,
     rng: np.random.Generator,
     data_generator: str,
-    pop_data: pd.DataFrame | None = None,
+    wgan_train_data: pd.DataFrame | None = None,
     generators: list[Generator] | None = None,
     data_wrappers: list[DataWrapper] | None = None,
 ) -> np.ndarray:
@@ -31,7 +31,7 @@ def simulation(
         dgp: DGP to simulate data from.
         rng: Random number generator.
         data_generator: Data generator to use.
-        pop_data: Population data for WGAN data generator.
+        wgan_train_data: Data used to train the WGAN.
         generators: Generators for WGAN data generator.
         data_wrappers: Data wrappers for WGAN data generator.
 
@@ -40,9 +40,20 @@ def simulation(
 
 
     """
+    if data_generator == "wgan":
+        _check_wgan_args(wgan_train_data, generators, data_wrappers)
     mse = np.zeros(n_sim)
 
     for i in range(n_sim):
+        if data_generator == "wgan":
+            pop_data = _generate_pop_data(
+                wgan_train_data=wgan_train_data,
+                data_generators=generators,  # type: ignore[arg-type]
+                data_wrappers=data_wrappers,  # type: ignore[arg-type]
+            )
+        else:
+            pop_data = None
+
         mse[i] = _experiment(
             n_obs=n_obs,
             dim=dim,
@@ -50,10 +61,8 @@ def simulation(
             sample_fraction=sample_fraction,
             dgp=dgp,
             data_generator=data_generator,
-            rng=rng,
             pop_data=pop_data,
-            generators=generators,
-            data_wrappers=data_wrappers,
+            rng=rng,
         )
 
     return mse
@@ -68,10 +77,7 @@ def _experiment(
     data_generator: str,
     rng: np.random.Generator,
     pop_data: pd.DataFrame | None = None,
-    generators: list[Generator] | None = None,
-    data_wrappers: list[DataWrapper] | None = None,
 ) -> float:
-    # Draw data
     if data_generator == "standard":
         data, data_test = (
             data_wager_athey_2018(
@@ -82,17 +88,13 @@ def _experiment(
             )
             for _ in range(2)
         )
-
-    elif data_generator == "wgan":
-        data, data_test = (
-            data_wgan(
-                n_obs=n_obs,
-                pop_data=pop_data,
-                data_wrappers=data_wrappers,  # type: ignore[arg-type]
-                generators=generators,  # type: ignore[arg-type]
-            )
-            for _ in range(2)
-        )
+    elif data_generator == "wgan" and pop_data is not None:
+        # Sample without replacement from population data
+        data = pop_data.sample(n_obs, replace=False)
+        data_test = pop_data.sample(n_obs, replace=False)
+    else:
+        msg = "Data generator not implemented or pop_data not provided."
+        raise ValueError(msg)
 
     # Fit causal forest
     cf = CausalForest(
@@ -110,6 +112,50 @@ def _experiment(
         X=data_test.drop(columns=["y", "d", "p_z"]),
     )[:, 0]
 
-    true = dgp.treatment_effect(data_test[[f"x{i}" for i in range(dim)]])
+    if data_generator == "standard":
+        true = dgp.treatment_effect(data_test[[f"x{i}" for i in range(dim)]])
+    elif data_generator == "wgan":
+        true = data_test["tau"]
 
     return np.mean((pred - true) ** 2)
+
+
+def _generate_pop_data(
+    wgan_train_data: pd.DataFrame,
+    data_generators: list[Generator],
+    data_wrappers: list[DataWrapper],
+    n_obs_pop: int = 1_000_000,
+) -> pd.DataFrame:
+    """Draw population data for WGAN data generator."""
+    return data_wgan(
+        n_obs=n_obs_pop,
+        wgan_train_data=wgan_train_data,
+        data_wrappers=data_wrappers,
+        generators=data_generators,
+    )
+
+
+def _check_wgan_args(
+    wgan_train_data: pd.DataFrame | None = None,
+    generators: list[Generator] | None = None,
+    data_wrappers: list[DataWrapper] | None = None,
+) -> None:
+    # Check wgan_train_data is a pd.DataFrame
+    msg = ""
+    if not isinstance(wgan_train_data, pd.DataFrame):
+        msg += "wgan_train_data must be a pd.DataFrame."
+
+    # Check generators is a list of type Generator
+    if not isinstance(generators, list):
+        msg += "generators must be a list."
+    elif not all(isinstance(gen, Generator) for gen in generators):
+        msg += "generators must be a list of Generator."
+
+    # Check data_wrappers is a list of type DataWrapper
+    if not isinstance(data_wrappers, list):
+        msg += "data_wrappers must be a list."
+    elif not all(isinstance(dw, DataWrapper) for dw in data_wrappers):
+        msg += "data_wrappers must be a list of DataWrapper."
+
+    if msg:
+        raise ValueError(msg)

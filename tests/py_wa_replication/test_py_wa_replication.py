@@ -12,7 +12,7 @@ from topics_causal_inf.py_wa_replication.py_wa_replication import (
 def test_simulation_runs() -> None:
     for dgp in DGPS[2:]:
         for dgen in ["wgan", "standard"]:
-            pop_data = pd.read_feather(WGAN_GEN / f"df_{dgp.name}.feather")
+            wgan_train_data = pd.read_feather(WGAN_GEN / f"df_{dgp.name}.feather")
             generators = pickle.load(
                 Path.open(WGAN_GEN / f"generators_{dgp.name}.pkl", "rb"),
             )
@@ -29,7 +29,7 @@ def test_simulation_runs() -> None:
                 dgp=dgp,
                 rng=RNG,
                 data_generator=dgen,
-                pop_data=pop_data,
                 generators=generators,
                 data_wrappers=data_wrappers,
+                wgan_train_data=wgan_train_data,
             )

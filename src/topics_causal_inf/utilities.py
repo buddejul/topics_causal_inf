@@ -102,7 +102,7 @@ def tau_heterog(
 # TODO(@buddejul): Change df.sample to use RNG. #noqa: TD003, FIX002
 def data_wgan(
     n_obs: int,
-    pop_data: pd.DataFrame,
+    wgan_train_data: pd.DataFrame,
     data_wrappers: list[DataWrapper],
     generators: list[Generator],
 ) -> pd.DataFrame:
@@ -111,7 +111,7 @@ def data_wgan(
     Arguments:
         n_obs: Number of observations.
         dgp: DGP to simulate data from.
-        pop_data: Population data used to train the generator.
+        wgan_train_data: Data that was used to train the generator.
         data_wrappers: Data wrappers used to apply the generator.
         generators: Generators used to generate data.
 
@@ -122,7 +122,7 @@ def data_wgan(
     # simulate data with conditional WGANs
     out = data_wrappers[0].apply_generator(
         generators[0],
-        pop_data.sample(int(n_obs), replace=True),
+        wgan_train_data.sample(int(n_obs), replace=True),
     )
     out = data_wrappers[1].apply_generator(generators[1], out)
 
