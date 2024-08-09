@@ -39,3 +39,12 @@ docs_template/scripts/latex/*.png
 
 # local
 .vscode
+
+# jupyter notebooks
+*.ipynb
+
+# profiling
+*.prof
+
+# feather (e.g. dataframes used for wgan in colab)
+*.feather
