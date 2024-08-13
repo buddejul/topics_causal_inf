@@ -11,19 +11,20 @@ from sklearn.ensemble import RandomForestRegressor  # type: ignore[import-untype
 
 from topics_causal_inf.classes import DGP
 from topics_causal_inf.config import BLD, RNG
+from topics_causal_inf.define_dgps import DGP3, DGP4
 from topics_causal_inf.generic_ml.simulation import simulation
 from topics_causal_inf.wa_replication.sim_config import DIM_VALS
 
 N_OBS = 10_000
-N_SIMS = 20
-N_SPLITS = 50
+N_SIMS = 2
+N_SPLITS = 2
 
-DGP_TO_RUN = ["dgp3", "dgp4", "dgp5"]
+DGP_TO_RUN = [DGP3, DGP4]
 
 
 class _Arguments(NamedTuple):
     dim: int
-    dgp: str
+    dgp: DGP
     path_to_res: Path
     ml_learner: tuple[RegressorMixin, RegressorMixin]
     n_obs: int = N_OBS
@@ -33,15 +34,15 @@ class _Arguments(NamedTuple):
 
 
 ID_TO_KWARGS = {
-    f"genml_{dgp}_{dim}": _Arguments(
+    f"genml_{dgp.name}_{dim}": _Arguments(
         dim=dim,
         dgp=dgp,
-        path_to_res=BLD / "generic_ml" / "sims" / f"generic_ml_{dgp}_dim{dim}.pkl",
+        path_to_res=BLD / "generic_ml" / "sims" / f"generic_ml_{dgp.name}_dim{dim}.pkl",
         ml_learner=(RandomForestRegressor(), RandomForestRegressor()),
     )
     for dgp in DGP_TO_RUN
     for dim in DIM_VALS
-    if not (dgp == "dgp5" and dim < 8)  # noqa: PLR2004
+    if not (dgp.name == "dgp5" and dim < 8)  # noqa: PLR2004
 }
 
 for id_, kwargs in ID_TO_KWARGS.items():

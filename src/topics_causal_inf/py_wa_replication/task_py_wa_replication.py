@@ -10,10 +10,10 @@ from pytask import Product, task
 
 from topics_causal_inf.classes import DGP
 from topics_causal_inf.config import BLD, RNG, WGAN_GEN
-from topics_causal_inf.define_dgps import DGP3, DGP4, DGP5
+from topics_causal_inf.define_dgps import DGP3, DGP4
 from topics_causal_inf.py_wa_replication.py_wa_replication import simulation
 
-DGPS_TO_RUN = [DGP3, DGP4, DGP5]
+DGPS_TO_RUN = [DGP3, DGP4]
 DIMS_TO_RUN = [8, 10, 12]
 
 

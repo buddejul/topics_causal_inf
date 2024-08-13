@@ -3,6 +3,7 @@
 import numpy as np
 import pandas as pd  # type: ignore[import-untyped]
 import statsmodels.api as sm  # type: ignore[import-untyped]
+from econml.grf import CausalForest  # type: ignore[import-untyped]
 from formulaic import model_matrix  # type: ignore[import-untyped]
 from scipy.stats import norm  # type: ignore[import-untyped]
 from sklearn.base import RegressorMixin  # type: ignore[import-untyped]
@@ -101,10 +102,16 @@ def estimate_single_split(
     # Train ML proxies and predict on main sample
     ml_fitted_d0, ml_fitted_d1 = ml_proxy(aux.drop(columns=["p_z"]), ml_learner)
 
-    main["b_z"] = ml_fitted_d0.predict(main.drop(columns=["y", "p_z"]))
-    main["s_z"] = (
-        ml_fitted_d1.predict(main.drop(columns=["y", "p_z", "b_z"])) - main["b_z"]
-    )
+    main["b_z"] = ml_fitted_d0.predict(main.drop(columns=["y", "p_z", "d"]))
+
+    if isinstance(ml_learner[1], CausalForest):
+        # Causal Forest directly targets CATE
+        main["s_z"] = ml_fitted_d1.predict(main.drop(columns=["y", "p_z", "b_z", "d"]))
+    else:
+        main["s_z"] = (
+            ml_fitted_d1.predict(main.drop(columns=["y", "p_z", "b_z", "d"]))
+            - main["b_z"]
+        )
 
     # Estimate BLP parameters
     if strategy == "blp_weighted_residual":
@@ -135,16 +142,33 @@ def ml_proxy(
     model0 = ml_learner[0]
     model1 = ml_learner[1]
 
-    ml_fitted_d0 = model0.fit(
-        data[data["d"] == 0].drop(columns="y"),
-        data[data["d"] == 0]["y"],
-    )
+    # Define kwargs depending on the model used
+    # if type is CausalForest()
+    if isinstance(model0, CausalForest):
+        msg = "Cannot specify CausalForest as BCA learner."
+        raise TypeError(msg)
+    kwargs0 = {
+        "X": data[data["d"] == 0].drop(columns=["y", "d"]),
+        "y": data[data["d"] == 0]["y"],
+    }
+
+    if isinstance(model1, CausalForest):
+        # CausalForest directly targets CATE hence we fit on all of the data.
+        kwargs1 = {
+            "X": data.drop(columns=["y", "d"]),
+            "T": data["d"],
+            "y": data["y"],
+        }
+    else:
+        kwargs1 = {
+            "X": data[data["d"] == 1].drop(columns=["y", "d"]),
+            "y": data[data["d"] == 1]["y"],
+        }
+
+    ml_fitted_d0 = model0.fit(**kwargs0)
 
     # Fit for treated (d == 1)
-    ml_fitted_d1 = model1.fit(
-        data[data["d"] == 1].drop(columns="y"),
-        data[data["d"] == 1]["y"],
-    )
+    ml_fitted_d1 = model1.fit(**kwargs1)
 
     return ml_fitted_d0, ml_fitted_d1
 
