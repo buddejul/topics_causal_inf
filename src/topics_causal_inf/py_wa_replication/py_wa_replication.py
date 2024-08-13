@@ -16,10 +16,11 @@ def simulation(
     dgp: DGP,
     rng: np.random.Generator,
     data_generator: str,
+    alpha: float = 0.05,
     wgan_train_data: pd.DataFrame | None = None,
     generators: list[Generator] | None = None,
     data_wrappers: list[DataWrapper] | None = None,
-) -> np.ndarray:
+) -> pd.DataFrame:
     """Run simulation using the generic_ml approach and WA 2018 DGP.
 
     Arguments:
@@ -33,16 +34,18 @@ def simulation(
         data_generator: Data generator to use.
         wgan_train_data: Data used to train the WGAN.
         generators: Generators for WGAN data generator.
+        alpha: Significance level; 1-alpha is the (asymptotic) coverage probability.
         data_wrappers: Data wrappers for WGAN data generator.
 
     Returns:
-        np.ndarray: Mean squared error of treatment effect prediction.
+        pd.DataFrame: Mean squared error of treatment effect prediction.
 
 
     """
     if data_generator == "wgan":
         _check_wgan_args(wgan_train_data, generators, data_wrappers)
     mse = np.zeros(n_sim)
+    coverage = np.zeros(n_sim)
 
     for i in range(n_sim):
         if data_generator == "wgan":
@@ -54,18 +57,24 @@ def simulation(
         else:
             pop_data = None
 
-        mse[i] = _experiment(
+        mse[i], coverage[i] = _experiment(
             n_obs=n_obs,
             dim=dim,
             num_trees=num_trees,
             sample_fraction=sample_fraction,
             dgp=dgp,
             data_generator=data_generator,
+            alpha=alpha,
             pop_data=pop_data,
             rng=rng,
         )
 
-    return mse
+    return pd.DataFrame(
+        {
+            "mse": mse,
+            "coverage": coverage,
+        },
+    )
 
 
 def _experiment(
@@ -76,8 +85,11 @@ def _experiment(
     dgp: DGP,
     data_generator: str,
     rng: np.random.Generator,
+    alpha: float = 0.05,
     pop_data: pd.DataFrame | None = None,
-) -> float:
+) -> tuple[float, float]:
+    feature_names = [f"x{i}" for i in range(dim)]
+
     if data_generator == "standard":
         data, data_test = (
             data_wager_athey_2018(
@@ -101,23 +113,25 @@ def _experiment(
         n_estimators=num_trees,
         max_samples=sample_fraction,
     )
+
     cf.fit(
-        X=data.drop(columns=["y", "d", "p_z"]),
+        X=data[feature_names],
         T=data["d"],
         y=data["y"],
     )
 
-    # Predict treatment effect
-    pred = cf.predict(
-        X=data_test.drop(columns=["y", "d", "p_z"]),
-    )[:, 0]
+    pred = cf.predict(X=data_test[feature_names]).flatten()
+    true = dgp.treatment_effect(data_test[feature_names])
 
-    if data_generator == "standard":
-        true = dgp.treatment_effect(data_test[[f"x{i}" for i in range(dim)]])
-    elif data_generator == "wgan":
-        true = data_test["tau"]
+    # Calculate (expected) MSE
+    mse = np.mean((pred - true) ** 2)
 
-    return np.mean((pred - true) ** 2)
+    # Calculate (expected) coverage
+    ci_lo, ci_hi = cf.predict_interval(X=data_test[feature_names], alpha=alpha)
+
+    coverage = np.mean((ci_lo.flatten() <= true) & (true <= ci_hi.flatten()))
+
+    return mse, coverage
 
 
 def _generate_pop_data(
