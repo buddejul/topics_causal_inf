@@ -12,9 +12,11 @@ from topics_causal_inf.classes import DGP
 from topics_causal_inf.config import BLD, RNG, WGAN_GEN
 from topics_causal_inf.define_dgps import DGP3, DGP4
 from topics_causal_inf.py_wa_replication.py_wa_replication import simulation
+from topics_causal_inf.wa_replication.sim_config import DIM_VALS
 
 DGPS_TO_RUN = [DGP3, DGP4]
-DIMS_TO_RUN = [8, 10, 12]
+
+DIMS_TO_RUN = DIM_VALS
 
 
 class _Arguments(NamedTuple):
@@ -26,7 +28,7 @@ class _Arguments(NamedTuple):
     dim: int = 10
     rng: np.random.Generator = RNG
     num_trees: int = 100
-    sample_fraction: float = 0.5
+    sample_fraction: float = 0.2
 
 
 DG_TO_RUN = ["standard", "wgan"]
@@ -44,6 +46,7 @@ ID_TO_KWARGS = {
     for dgp in DGPS_TO_RUN
     for dim in DIMS_TO_RUN
     for dgen in DG_TO_RUN
+    if not (dgen == "wgan" and dim != 10)  # noqa: PLR2004
 }
 
 for id_, kwargs in ID_TO_KWARGS.items():
@@ -88,5 +91,4 @@ for id_, kwargs in ID_TO_KWARGS.items():
             data_wrappers=data_wrappers,
         )
 
-        with Path.open(path_to_data, "wb") as f:
-            pickle.dump(res, f)
+        res.to_pickle(path_to_data)

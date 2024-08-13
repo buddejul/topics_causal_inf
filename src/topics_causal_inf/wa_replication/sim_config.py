@@ -13,7 +13,7 @@ class SimulationDGP(NamedTuple):
     sample_fraction: float
 
 
-DIM_VALS = [8, 15, 30]
+DIM_VALS = [10, 15, 30]
 
 SIMULATION2 = SimulationDGP(
     dgp="dgp2",

@@ -1,39 +1,30 @@
 """Tasks for running WA 2018 replication simulations."""
 
-import pickle
 from pathlib import Path
 from typing import Annotated, NamedTuple
 
 import pandas as pd  # type: ignore[import-untyped]
 from pytask import Product, task
 
+from topics_causal_inf.classes import DGP
 from topics_causal_inf.config import BLD
 from topics_causal_inf.py_wa_replication.task_py_wa_replication import (
-    DG_TO_RUN,
     DGPS_TO_RUN,
-    DIMS_TO_RUN,
+    ID_TO_KWARGS,
 )
 
 
 class _Arguments(NamedTuple):
-    dgp: str
-    path_to_results: dict[str, Path]
+    dgp: DGP
+    path_to_results: list[Path]
     path_to_table: Path
 
 
-PATH_TO_RESULTS = {
-    f"{dgp.name}_{dgen}_{dim}": BLD
-    / "py_wa_replication"
-    / "sims"
-    / f"py_wa_replication_{dgp.name}_dim{dim}_{dgen}.pkl"
-    for dgp in DGPS_TO_RUN
-    for dgen in DG_TO_RUN
-    for dim in DIMS_TO_RUN
-}
+PATH_TO_RESULTS = [args.path_to_data for _, args in ID_TO_KWARGS.items()]
 
-ID_TO_KWARGS = {
+ID_TO_KWARGS_TABLES = {
     f"{dgp.name}": _Arguments(
-        dgp=dgp.name,
+        dgp=dgp,
         path_to_results=PATH_TO_RESULTS,
         path_to_table=BLD / "tables" / f"py_wa_replication_{dgp.name}.tex",
     )
@@ -41,37 +32,34 @@ ID_TO_KWARGS = {
 }
 
 
-for id_, kwargs in ID_TO_KWARGS.items():
+for id_, kwargs in ID_TO_KWARGS_TABLES.items():
 
     @task(id=id_, kwargs=kwargs)  # type: ignore[arg-type]
     def task_py_wa_replication_table(
-        dgp: str,
+        dgp: DGP,
         path_to_results: dict[str, Path],
         path_to_table: Annotated[Path, Product],
     ) -> None:
         """Task for WA 2018 replication simulations."""
         # Combine results from different dimensions and data generators into single df
-        res = pd.DataFrame()
-        for dgen in DG_TO_RUN:
-            for dim in DIMS_TO_RUN:
-                # Exit if key does not exist
-                if f"{dgp}_{dgen}_{dim}" not in path_to_results:
-                    continue
-                with Path.open(path_to_results[f"{dgp}_{dgen}_{dim}"], "rb") as f:
-                    mse = pickle.load(f)
-                _df = pd.DataFrame(mse, columns=["mse"])
-                _df["dim"] = dim
-                _df["data_generator"] = dgen
-                _df["dgp"] = dgp
+        res = pd.concat(
+            [pd.read_pickle(path) for path in path_to_results],
+        )
 
-                res = pd.concat([res, _df])
+        res = res[res["dgp"] == dgp.name]
+        res = res.drop(columns=["dgp"])
 
-        res_to_table = res.groupby(["dgp", "data_generator", "dim"]).agg(
+        res_to_table = res.groupby(["data_generator", "dim"]).agg(
             ["mean", "std"],
         )
 
         res_to_table.to_latex(
             path_to_table,
-            caption=f"Mean and standard deviation of MSE for {dgp} DGP.",
-            label=f"tab:py_wa_replication_{dgp}",
+            formatters={
+                ("mse", "mean"): "{:,.2f}".format,
+                ("mse", "std"): "{:,.2f}".format,
+                ("coverage", "mean"): "{:,.2f}".format,
+                ("coverage", "std"): "{:,.2f}".format,
+            },
+            header=False,
         )

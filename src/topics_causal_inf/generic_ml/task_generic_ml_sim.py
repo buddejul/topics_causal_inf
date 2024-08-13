@@ -5,6 +5,7 @@ from typing import Annotated, NamedTuple
 
 import numpy as np
 import pytask
+from econml.grf import CausalForest  # type: ignore[import-untyped]
 from pytask import Product, task
 from sklearn.base import RegressorMixin  # type: ignore[import-untyped]
 from sklearn.ensemble import RandomForestRegressor  # type: ignore[import-untyped]
@@ -16,8 +17,8 @@ from topics_causal_inf.generic_ml.simulation import simulation
 from topics_causal_inf.wa_replication.sim_config import DIM_VALS
 
 N_OBS = 10_000
-N_SIMS = 2
-N_SPLITS = 2
+N_SIMS = 20
+N_SPLITS = 25
 
 DGP_TO_RUN = [DGP3, DGP4]
 
@@ -38,7 +39,10 @@ ID_TO_KWARGS = {
         dim=dim,
         dgp=dgp,
         path_to_res=BLD / "generic_ml" / "sims" / f"generic_ml_{dgp.name}_dim{dim}.pkl",
-        ml_learner=(RandomForestRegressor(), RandomForestRegressor()),
+        ml_learner=(
+            RandomForestRegressor(n_estimators=100, max_samples=0.2),
+            CausalForest(n_estimators=100, max_samples=0.2),
+        ),
     )
     for dgp in DGP_TO_RUN
     for dim in DIM_VALS
