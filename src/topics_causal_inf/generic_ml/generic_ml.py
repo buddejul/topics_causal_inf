@@ -96,22 +96,22 @@ def estimate_single_split(
     ml_learner: tuple[RegressorMixin, RegressorMixin],
 ) -> tuple[np.ndarray, np.ndarray, float, RegressorMixin, RegressorMixin]:
     """Estimate BLP parameters for a single split."""
+    pattern = r"^x\d+$"
+    feature_names = data.filter(regex=pattern).columns.tolist()
+
     # Split data into training and test set
     main, aux = train_test_split(data, test_size=0.5)
 
     # Train ML proxies and predict on main sample
     ml_fitted_d0, ml_fitted_d1 = ml_proxy(aux.drop(columns=["p_z"]), ml_learner)
 
-    main["b_z"] = ml_fitted_d0.predict(main.drop(columns=["y", "p_z", "d"]))
+    main["b_z"] = ml_fitted_d0.predict(main[feature_names])
 
     if isinstance(ml_learner[1], CausalForest):
         # Causal Forest directly targets CATE
-        main["s_z"] = ml_fitted_d1.predict(main.drop(columns=["y", "p_z", "b_z", "d"]))
+        main["s_z"] = ml_fitted_d1.predict(main[feature_names])
     else:
-        main["s_z"] = (
-            ml_fitted_d1.predict(main.drop(columns=["y", "p_z", "b_z", "d"]))
-            - main["b_z"]
-        )
+        main["s_z"] = ml_fitted_d1.predict(main[feature_names]) - main["b_z"]
 
     # Estimate BLP parameters
     if strategy == "blp_weighted_residual":
@@ -142,26 +142,30 @@ def ml_proxy(
     model0 = ml_learner[0]
     model1 = ml_learner[1]
 
+    # feature_names are all names of the form "x0", "x1", ...
+    pattern = r"^x\d+$"
+    feature_names = data.filter(regex=pattern).columns.tolist()
+
     # Define kwargs depending on the model used
     # if type is CausalForest()
     if isinstance(model0, CausalForest):
         msg = "Cannot specify CausalForest as BCA learner."
         raise TypeError(msg)
     kwargs0 = {
-        "X": data[data["d"] == 0].drop(columns=["y", "d"]),
+        "X": data[data["d"] == 0][feature_names],
         "y": data[data["d"] == 0]["y"],
     }
 
     if isinstance(model1, CausalForest):
         # CausalForest directly targets CATE hence we fit on all of the data.
         kwargs1 = {
-            "X": data.drop(columns=["y", "d"]),
+            "X": data[feature_names],
             "T": data["d"],
             "y": data["y"],
         }
     else:
         kwargs1 = {
-            "X": data[data["d"] == 1].drop(columns=["y", "d"]),
+            "X": data[data["d"] == 1][feature_names],
             "y": data[data["d"] == 1]["y"],
         }
 

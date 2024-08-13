@@ -2,6 +2,7 @@
 
 import numpy as np
 import pandas as pd  # type: ignore[import-untyped]
+from econml.grf import CausalForest  # type: ignore[import-untyped]
 from sklearn.base import RegressorMixin  # type: ignore[import-untyped]
 
 from topics_causal_inf.classes import DGP
@@ -52,17 +53,23 @@ def _single_experiment(
     rng: np.random.Generator,
 ) -> pd.DataFrame:
     """Run single experiment for generic_ml simulation."""
+    feature_names = [f"x{i}" for i in range(dim)]
+
     data = data_wager_athey_2018(n_obs=n_obs, dim=dim, dgp=dgp, rng=rng)
 
     res = generic_ml(data, n_splits, alpha=0.05, ml_learner=ml_learner)
 
     # Draw evaluation data and calculate rmse using linear prediction based on res
     data_eval = data_wager_athey_2018(n_obs=n_obs, dim=dim, dgp=dgp, rng=rng)
-    data_eval = data_eval.drop(columns=["y", "p_z"])
+    data_eval = data_eval[feature_names]
 
-    data_eval["s_z"] = res.ml_fitted_d1.predict(data_eval) - res.ml_fitted_d1.predict(
-        data_eval,
-    )
+    if isinstance(ml_learner[1], CausalForest):
+        # Causal Forest directly targets CATE
+        data_eval["s_z"] = res.ml_fitted_d1.predict(data_eval[feature_names])
+    else:
+        data_eval["s_z"] = res.ml_fitted_d1.predict(
+            data_eval[feature_names],
+        ) - res.ml_fitted_d0.predict(data_eval[feature_names])
 
     data_eval["pred"] = res.blp_params[0] + res.blp_params[1] * data_eval["s_z"]
 

@@ -4,7 +4,6 @@ from pathlib import Path
 from typing import Annotated, NamedTuple
 
 import numpy as np
-import pytask
 from econml.grf import CausalForest  # type: ignore[import-untyped]
 from pytask import Product, task
 from sklearn.base import RegressorMixin  # type: ignore[import-untyped]
@@ -51,7 +50,6 @@ ID_TO_KWARGS = {
 
 for id_, kwargs in ID_TO_KWARGS.items():
 
-    @pytask.mark.skip()
     @task(id=id_, kwargs=kwargs)  # type: ignore[arg-type]
     def task_generic_ml_simulation(
         dim: int,
