@@ -169,7 +169,7 @@ The generic ML approach allows want to place as little assumptions as possible o
 This is achieved by (a) moving the inferential target to \textit{features} of the CATE (like the BLP) and (b) using sample splitting to derive inferential guarantees.
 Hence, this comes at the cost of potentially being able to only make statements about a (bad) approximation to the original inferential target as well as a loss in precision due to sample splitting.
 However, there are a number of clear advantages: The researcher does not have to commit to a specific --- small --- set of covariates ex-ante or make sparsity assumptions.
-At the same time, the approach as discussed in \cite{chernozhukov2023genml} does not allow for nuisance parameter estimation, i.e.\ requires a known propensity score.
+At the same time, the approach as discussed in~\cite{chernozhukov2023genml} does not allow for nuisance parameter estimation, i.e.\ requires a known propensity score.
 
 \paragraph*{Two Stages}
 A key feature of the approach is \textit{sample splitting}. Let $(M,A)$ denote two partitions of the sample into an auxiliary and a main dataset.
@@ -180,7 +180,7 @@ In Stage 2, we then proceed to use $S(z), B(z)$ applied to the main dataset $M$ 
 The first feature is the best linear predictor of the CATE function \textit{by the machine learning proxy} $S(Z)$.
 In particular, we want to solve
 \begin{equation*}
-\min_{(b1,b2)\in \mathbb{R}^2} \E [(s_0(Z) - b_1 - b_2 S(Z))^2]
+    \min_{(b1,b2)\in \mathbb{R}^2} \E [(s_0(Z) - b_1 - b_2 S(Z))^2]
 \end{equation*}
 which, if it exists, is given by
 \begin{equation*}
@@ -219,8 +219,14 @@ In CLAN, we are interested in characteristics $g(Y, D, Z)$ and we want to compar
 
 \section{Simulation and Results}
 
-
-
+\subsection{Software Packages}
+For the baseline causal forest estimator I rely on the `CausalForest' implementation provided by the \href{https://econml.azurewebsites.net/}{EconML} Python package.
+This package implements a range of machine learning techniques for causal based on the statistical literature and making use of existing machine learning implementations in Python.
+For the generic ML part, I implemented most algorithms by hand since these only involve specifying linear regressions and sample splitting.
+Again, it is possible to flexibly use any of the machine learning estimators in this case, for example implemented in EconML or sklearn directly.
+For estimating DGPs using Wasserstein Generative Adversarial Networks (WGAN) I use the \href{https://github.com/gsbDBI/ds-wgan}{ds-wgan} implementation provided by the authors.
+Unfortunately, the code is not maintained and not compatible with recent versions of most basic Python libraries (e.g. NumPy 2.0).
+To avoid dependency conflicts with the other packages or manually debugging their code, I instead trained the generators in a Google Colab environment, which also comes at a significant speedup due to GPU availability.
 
 \clearpage
 \newpage
