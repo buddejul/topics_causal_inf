@@ -28,7 +28,7 @@ def generic_ml(
     # Prepare inputs
 
     # Inference algorithm
-    blp_params, blp_se, ml_fitted_d0, ml_fitted_d1, gates_params, gates_se = (
+    blp_params, blp_se, ml_fitted_d0, ml_fitted_d1, gates_params, gates_se, clan = (
         inference_algorithm(
             data,
             n_splits,
@@ -72,6 +72,7 @@ def generic_ml(
         gates_pvals=np.median(gates_pvals, axis=0),
         gates_ci_lo=np.median(gates_ci_lo, axis=0),
         gates_ci_hi=np.median(gates_ci_hi, axis=0),
+        clan=np.median(clan, axis=0),
     )
 
 
@@ -87,8 +88,13 @@ def inference_algorithm(
     list[RegressorMixin],
     np.ndarray,
     np.ndarray,
+    np.ndarray,
 ]:
     """Implements the inference algorithm; see Algorithm 1 in the paper."""
+    pattern = r"^x\d+$"
+    feature_names = data.filter(regex=pattern).columns.tolist()
+    dim = len(feature_names)
+
     blp_params = np.zeros((n_splits, 2))
     blp_se = np.zeros((n_splits, 2))
     lambda_hat = np.zeros(n_splits)
@@ -96,6 +102,7 @@ def inference_algorithm(
     ml_fitted_d1 = list(np.zeros(n_splits))
     gates_params = np.zeros((n_splits, 5))
     gates_se = np.zeros((n_splits, 5))
+    clan = np.zeros((n_splits, 2, dim))
 
     for i in range(n_splits):
         (
@@ -106,13 +113,14 @@ def inference_algorithm(
             ml_fitted_d1[i],
             gates_params[i, :],
             gates_se[i, :],
+            clan[i, :, :],
         ) = estimate_single_split(
             data,
             strategy,
             ml_learner,
         )
 
-    return blp_params, blp_se, ml_fitted_d0, ml_fitted_d1, gates_params, gates_se
+    return blp_params, blp_se, ml_fitted_d0, ml_fitted_d1, gates_params, gates_se, clan
 
 
 def estimate_single_split(
@@ -125,6 +133,7 @@ def estimate_single_split(
     float,
     RegressorMixin,
     RegressorMixin,
+    np.ndarray,
     np.ndarray,
     np.ndarray,
 ]:
@@ -159,6 +168,9 @@ def estimate_single_split(
     gates = gates_ht_transform(main)
     gates_params = [f"s_z_quintiles[T.{i}]" for i in np.arange(5)]
 
+    # Classification analysis (CLAN)
+    clan = classification_analysis(main)
+
     # Fit measure
     lambda_hat = fit_measure_cate(res.params[blp_params[1]], main, "blp")
 
@@ -170,6 +182,7 @@ def estimate_single_split(
         ml_fitted_d1,
         gates.params[gates_params],
         gates.HC3_se[gates_params],
+        clan,
     )
 
 
@@ -316,3 +329,18 @@ def gates_ht_transform(
     )
 
     return model.fit()
+
+
+def classification_analysis(data: pd.DataFrame) -> np.ndarray:
+    """Compute mean covariate characteristics for the least and most affected groups."""
+    # Compute mean covariate characteristics for the least and most affected groups
+    data["s_z_quintiles"] = pd.qcut(data["s_z"], q=5, labels=np.arange(5))
+
+    pattern = r"^x\d+$"
+    feature_names = data.filter(regex=pattern).columns.tolist()
+
+    means_by_quintiles = (
+        data.groupby("s_z_quintiles", observed=False).mean()[feature_names].to_numpy()
+    )
+
+    return means_by_quintiles[0 :: len(means_by_quintiles) - 1]

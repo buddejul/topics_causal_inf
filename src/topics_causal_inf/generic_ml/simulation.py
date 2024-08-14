@@ -6,7 +6,7 @@ from econml.grf import CausalForest  # type: ignore[import-untyped]
 from sklearn.base import RegressorMixin  # type: ignore[import-untyped]
 
 from topics_causal_inf.classes import DGP
-from topics_causal_inf.generic_ml.generic_ml import generic_ml
+from topics_causal_inf.generic_ml.generic_ml import classification_analysis, generic_ml
 from topics_causal_inf.utilities import (
     data_wager_athey_2018,
 )
@@ -24,9 +24,10 @@ def simulation(
     """Run simulation using the generic_ml approach and WA 2018 DGP."""
     mse_blp = np.zeros(n_sims)
     gates = np.zeros((n_sims, 5))
+    clans = np.zeros((n_sims, 2, dim))
 
     for i in range(n_sims):
-        mse_blp[i], gates[i, :] = _single_experiment(
+        mse_blp[i], gates[i, :], clans[i, :, :] = _single_experiment(
             n_obs=n_obs,
             dim=dim,
             n_splits=n_splits,
@@ -47,6 +48,13 @@ def simulation(
     for i in range(5):
         out[f"gate_{i}"] = gates[:, i]
         out[f"true_gate_{i}"] = true_gates[i]
+
+    true_clans = _simulate_true_clan(dgp=dgp, dim=dim, rng=rng)
+
+    for i in range(2):
+        for j in range(dim):
+            out[f"clan_{i}_{j}"] = clans[:, i, j]
+            out[f"true_clan_{i}_{j}"] = true_clans[i, j]
 
     return out
 
@@ -82,7 +90,11 @@ def _single_experiment(
 
     data_eval["true"] = dgp.treatment_effect(data_eval)
 
-    return np.mean((data_eval["pred"] - data_eval["true"]) ** 2), res.gates_params
+    return (
+        np.mean((data_eval["pred"] - data_eval["true"]) ** 2),
+        res.gates_params,
+        res.clan,
+    )
 
 
 def _simulate_true_gates(
@@ -109,4 +121,29 @@ def _simulate_true_gates(
 
     data["s_z_quintiles"] = pd.qcut(data["s_z"], q=5, labels=np.arange(5))
 
-    return data.groupby("s_z_quintiles").apply("mean")["s_z"]
+    return data.groupby("s_z_quintiles", observed=False).apply("mean")["s_z"]
+
+
+def _simulate_true_clan(
+    dgp: DGP,
+    dim: int,
+    rng: np.random.Generator,
+    n_obs: int = 1_000_000,
+) -> np.ndarray:
+    """Simulate true CLAN for the given DGP."""
+    # Check whether dgp.treatment_effect.keywords["tau"] raises error
+    if "tau" in dgp.treatment_effect.keywords:  # type: ignore[union-attr]
+        return np.ones(2) * dgp.treatment_effect.keywords["tau"]  # type: ignore[union-attr]
+
+    data = data_wager_athey_2018(
+        n_obs=n_obs,
+        dim=dim,
+        dgp=dgp,
+        rng=rng,
+    )
+
+    feature_names = [f"x{i}" for i in range(dim)]
+
+    data["s_z"] = dgp.treatment_effect(data[feature_names])
+
+    return classification_analysis(data)

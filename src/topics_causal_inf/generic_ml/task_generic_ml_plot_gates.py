@@ -7,6 +7,7 @@ import plotly.express as px  # type: ignore[import-untyped]
 import plotly.graph_objects as go  # type: ignore[import-untyped]
 from pytask import Product, task
 
+from topics_causal_inf.classes import DGP
 from topics_causal_inf.config import BLD, DGPS_TO_RUN
 from topics_causal_inf.generic_ml.task_generic_ml_sim import ID_TO_KWARGS
 
@@ -15,6 +16,7 @@ PATHS_TO_RESULTS = [args.path_to_res for _, args in ID_TO_KWARGS.items()]
 
 ID_TO_KWARGS_PLOTS = {
     dgp.name: {
+        "dgp": dgp,
         "path_to_plot": BLD
         / "generic_ml"
         / "plots"
@@ -27,12 +29,15 @@ for _id, kwargs in ID_TO_KWARGS_PLOTS.items():
 
     @task(id=_id, kwargs=kwargs)
     def task_generic_ml_plot_gates(
+        dgp: DGP,
         path_to_plot: Annotated[Path, Product],
         path_to_results: list[Path] = PATHS_TO_RESULTS,
     ):
         """Task for generic_ml plot gates."""
         # Load results
         res = pd.concat([pd.read_pickle(path) for path in path_to_results])
+
+        res = res[res["dgp"] == dgp.name]
 
         # Plot Figure
         fig = go.Figure()

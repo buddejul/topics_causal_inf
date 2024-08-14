@@ -26,6 +26,7 @@ class GenericMLResult:
     gates_pvals: np.ndarray
     gates_ci_lo: np.ndarray
     gates_ci_hi: np.ndarray
+    clan: np.ndarray
 
 
 class DGP(NamedTuple):

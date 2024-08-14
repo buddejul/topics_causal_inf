@@ -10,6 +10,7 @@ documents = ["paper"]
 
 for document in documents:
 
+    @pytask.mark.skip()
     @pytask.mark.latex(
         script=DOCUMENTS / f"{document}.tex",
         document=BLD / "documents" / f"{document}.pdf",
@@ -26,6 +27,7 @@ for document in documents:
         "produces": ROOT / f"{document}.pdf",
     }
 
+    @pytask.mark.skip()
     @pytask.task(id=document, kwargs=kwargs)
     def task_copy_to_root(depends_on, produces):
         """Copy a document to the root directory for easier retrieval."""
