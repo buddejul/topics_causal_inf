@@ -73,11 +73,11 @@
 
 \begin{abstract}
     This term paper presents simulation results for two connected approaches to estimating conditional average treatment effects (CATE):
-    The \textit{causal forest} approach originally proposed in \cite{wager2018estimation} and the \textit{generic machine learning} approach discussed in \cite{chernozhukov2023genml}.
+    The \textit{causal forest} approach originally proposed in~\cite{wager2018estimation} and the \textit{generic machine learning} approach discussed in~\cite{chernozhukov2023genml}.
     In a first part, I replicate simulation results for causal forest reported in the original paper that demonstrate the ability to estimate a sparse CATE function and perform valid inference.
     I then continue to extend their analysis by lowering the degree of sparseness of the DGP and show that their method breaks down: RMSE is significantly increased and coverage is far below the nominal level.
     I show that inference on the BLP is still possible using the generic machine learning approach. However, for the DGP I consider the RMSE is still considerably worse, illustrating a trade-off between estimation properties and informativeness of the inferential target.
-    As an additional point of interest I consider the design of high-dimensional monte carlo studies using the approach suggested by \cite{athey2024wgan}.
+    As an additional point of interest I consider the design of high-dimensional monte carlo studies using the approach suggested by~\cite{athey2024wgan}.
 \end{abstract}
 
 \clearpage
@@ -94,7 +94,7 @@ Denoting the outcomes obtained in states of the world with treatment realization
 \begin{equation*}
     Y(0), Y(1) \perp D | Z.
 \end{equation*}
-In the context of \cite{chernozhukov2023genml} we will additionally make the assumption that the \textit{propensity score} $p(z) \equiv \Pr(D=1|Z=z)$ is a known function.
+In the context of~\cite{chernozhukov2023genml} we will additionally make the assumption that the \textit{propensity score} $p(z) \equiv \Pr(D=1|Z=z)$ is a known function.
 The leading case of this is a stratified experiment, with $p(z) = 0.5$ being the special case of a completely randomized experiment.
 Generally, the literature also often allows for an unknown propensity score which poses the problem of --- high-dimensional --- first-step estimation.
 Note this is not the ``dimensionality'' issue considered here, which is about the complexity of conditional average treatment effects.
@@ -107,12 +107,12 @@ Our goal is to estimate and perform inference on this quantity.
 Ideally, we would like to have a procedure with the following \textit{properties}:
 \begin{itemize}
     \item[(1)] Consistent estimation in the sense that the mean-squared error (MSE) converges to 0;
-    \item[(2)] valid inference, i.e. confidence intervals, for $CATE(z)$;
+    \item[(2)] valid inference, i.e.\ confidence intervals, for $CATE(z)$;
     \item[(3)] ability to adapt to high-dimensional covariate spaces (regimes where $p$ grows with $n$) without making sparsity assumptions;
     \item[(4)] no functional form restrictions on $s_0(z)$.
 \end{itemize}
 However, we know from general results on optimal achievable non-parametric rates that such a procedure cannot exist.
-All proposed approaches then proceed by relaxing one or more of the requirements stated above. The following briefly summarizes some of the ideas, a more comprehensive list of reference can be found in \cite{causalml2024}.
+All proposed approaches then proceed by relaxing one or more of the requirements stated above. The following briefly summarizes some of the ideas, a more comprehensive list of reference can be found in~\cite{causalml2024}.
 I focus in particular on sparsity assumptions and approximations to the CATE function, because these are two ideas that are taken up in the generic machine learning approach discussed later.
 \paragraph*{Sparsity}
 A first strategy is to place sparsity assumptions on the CATE function.
@@ -123,7 +123,7 @@ For example, a common set of approaches postulates a linear conditional mean fun
 where the covariates $Z$ are split into those determining systematic heterogeneity of treatment effects, $X$, and controls, $W$.
 In this model we have hence have $s_0(Z) = S_0(X) = \alpha'X$ under randomization. In these setups we can allow for both $p_1$ and $p_2$ to grow with the sample size.
 Hence, the CATE function can be high-dimensional at least for a subset of the covariates.
-For these linear models Lasso-type approaches adapted to causal inference (so called "double" lasso) will perform well, under a condition called \textit{approximate sparsity}.
+For these linear models Lasso-type approaches adapted to causal inference (so called ``double'' lasso) will perform well, under a condition called \textit{approximate sparsity}.
 Intuitively, this condition is fulfilled by DGPs where the magnitude of the (ordered) coefficients $\alpha_l, \beta_l$, decays sufficiently fast.
 One such DGP is for example given by
 \begin{equation*}
@@ -133,14 +133,14 @@ Assuming $p_1$, the dimension of heterogeneity, does not grow too fast and we ha
 \begin{equation*}
     \sqrt{n}(\hat{\alpha}-\alpha) \sim_a N(0,V)
 \end{equation*}
-where $V$ can be consistently estimated. These results are shown in \cite{belloni2015uniform} and \cite{belloni2018uniformly}.
+where $V$ can be consistently estimated. These results are shown in~\cite{belloni2015uniform} and~\cite{belloni2018uniformly}.
 
 \paragraph*{Approximations to the CATE}
-Another approach is taken in \cite{semenova2021debiased}:
+Another approach is taken in~\cite{semenova2021debiased}:
 They propose to focus on a \textit{low-dimensional} subset $X$ of the covariates $Z$, which the researcher has to decide on ex ante.
 Then, the new target for inference becomes the \textit{partial} CATE $s_0(X)$.
 Their paper then simultaneously allows for \textit{unconfoundedness} which poses the challenge of estimating $p(Z)$ --- potentially using machine learning methods --- in a first step.
-In a second step, they the nfocus on a \textit{linear} approximation to the (partial) CATE.
+In a second step, they the nfocus on a \textit{linear} approximation to the (partial) CATE\@.
 Hence, they essentially use the following approximations to make the problem solvable:
 \begin{equation*}
     s_0(Z) \approx s_0(X) \approx \beta'X.
@@ -163,7 +163,59 @@ For this we can then make use of standard least squares theory --- given that th
 \begin{equation*}
     \hat{\beta} - \beta_0 \sim_a N(0, \Omega/N).
 \end{equation*}
+
 \subsection{Generic Machine Learning}
+The generic ML approach allows want to place as little assumptions as possible on the data generating process, while maintaining valid inference.
+This is achieved by (a) moving the inferential target to \textit{features} of the CATE (like the BLP) and (b) using sample splitting to derive inferential guarantees.
+Hence, this comes at the cost of potentially being able to only make statements about a (bad) approximation to the original inferential target as well as a loss in precision due to sample splitting.
+However, there are a number of clear advantages: The researcher does not have to commit to a specific --- small --- set of covariates ex-ante or make sparsity assumptions.
+At the same time, the approach as discussed in \cite{chernozhukov2023genml} does not allow for nuisance parameter estimation, i.e.\ requires a known propensity score.
+
+\paragraph*{Two Stages}
+A key feature of the approach is \textit{sample splitting}. Let $(M,A)$ denote two partitions of the sample into an auxiliary and a main dataset.
+In Stage 1, we then use the auxiliary dataset $A$ to generate machine predictors for the maps $z\to B(z)$ (the BCA) and $z\to S(z)$ (the CATE).
+In Stage 2, we then proceed to use $S(z), B(z)$ applied to the main dataset $M$ to make inference on \textit{features} of $z\to s_0(z)$, for example a best linear predictor.
+
+\paragraph*{BLP of CATE}
+The first feature is the best linear predictor of the CATE function \textit{by the machine learning proxy} $S(Z)$.
+In particular, we want to solve
+\begin{equation*}
+\min_{(b1,b2)\in \mathbb{R}^2} \E [(s_0(Z) - b_1 - b_2 S(Z))^2]
+\end{equation*}
+which, if it exists, is given by
+\begin{equation*}
+    BLP[s_0(Z)|S(Z)] := \beta_1 + \beta_2(S(Z) - \E S(Z)).
+\end{equation*}
+Here, the solutions are given by $\beta_1 = \E s_0(Z)$ and $\beta_2 = Cov[s_0(Z), S(Z)]/Var[S(Z)]$.
+
+A simple approach to estimating $\beta_1, \beta_2$ is again the Horvitz-Thompson transform discussed above.
+In particular, it is easy to show that the projection
+\begin{equation*}
+    HY = \mu_1 + \mu_2(S(Z) - \E S(Z)) + \varepsilon, \qquad \E[(1, S(Z) - \E S(Z))'\varphi] = 0
+\end{equation*}
+identifies the BLP parameters, i.e.\ $\mu_1=\beta_1$ and $\mu_2 = \beta_2$.
+Estmation can then proceed based on the empirical analogue.
+While inference \textit{conditional} on the split is standard, unconditional inference has to rely on median aggregation of many splits (discussed below).
+
+\paragraph*{Other Targets}
+Other potential targets beside the BLP of the CATE are sorted group average treatment effects (GATES) and classification analysis (CLAN).
+GATES are average effects for a finite number of groups that are induced by the first stage machine learning proxy.
+For example, we define five groups by the size of their predicted treatment effect $S(z)$.
+More generally, we can consider any finite partition of the real line $-\infty = I_0 < I_1 < \cdots < I_K = \infty$ and the define GATES by
+\begin{equation*}
+    \gamma_k := \E[s_0(Z)|G_k], \qquad k=1,\ldots,K,
+\end{equation*}
+where group membership is determined by $G_k := I\{S(Z) \in I_k\}$.
+In CLAN, we are interested in characteristics $g(Y, D, Z)$ and we want to compare those for the least ($G_1$) and most ($G_K$) affected groups:
+\begin{equation*}
+    \delta_g := \E[g(Y, D, Z)|G_g], \qquad g \in \{1, K\}.
+\end{equation*}
+
+\paragraph*{ML Method Selection}
+[Tbd.]
+
+\paragraph*{Split-based Inference}
+
 
 \section{Simulation and Results}
 
@@ -174,7 +226,7 @@ For this we can then make use of standard least squares theory --- given that th
 \newpage
 
 % \setstretch{1}
-\printbibliography
+\printbibliography{}
 \setstretch{1.5}
 
 % \appendix
