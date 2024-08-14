@@ -19,6 +19,7 @@
 % \usepackage{pdf14} % Enable for Manuscriptcentral -- can't handle pdf 1.5
 % \usepackage{endfloat} % Enable to move tables / figures to the end. Useful for some
 % submissions.
+\DeclareMathOperator{\E}{E}
 
 \usepackage[
     natbib=true,
@@ -60,85 +61,121 @@
 \begin{document}
 
 \title{Topics Causal Inference}
-\thanks{EXAMPLE UNIVERSITY. Email: janedoe[at]example-university.de}
+\thanks{Bonn University. Email: s93jbudd[at]uni-bonn.de}
 
 \author{Julian Budde}
 
 \date{
-    {\bf Preliminary -- please do not quote}
-    \\[1ex]
     \today
 }
 
 \maketitle
 
-
 \begin{abstract}
-    Some abstract here.
+    This term paper presents simulation results for two connected approaches to estimating conditional average treatment effects (CATE):
+    The \textit{causal forest} approach originally proposed in \cite{wager2018estimation} and the \textit{generic machine learning} approach discussed in \cite{chernozhukov2023genml}.
+    In a first part, I replicate simulation results for causal forest reported in the original paper that demonstrate the ability to estimate a sparse CATE function and perform valid inference.
+    I then continue to extend their analysis by lowering the degree of sparseness of the DGP and show that their method breaks down: RMSE is significantly increased and coverage is far below the nominal level.
+    I show that inference on the BLP is still possible using the generic machine learning approach. However, for the DGP I consider the RMSE is still considerably worse, illustrating a trade-off between estimation properties and informativeness of the inferential target.
+    As an additional point of interest I consider the design of high-dimensional monte carlo studies using the approach suggested by \cite{athey2024wgan}.
 \end{abstract}
 
 \clearpage
 
+\section{Introduction}
 
-\section{Introduction} % (fold)
-\label{sec:introduction}
+\section{Methods}
 
-If you are using this template, please cite this item from the references:
-\citet{GaudeckerEconProjectTemplates}.
+\subsection{Problem Setup}
+Throughout we consider a setting with a binary treatment denoted by $D$ taking on values in $\{0, 1\}$.
+$Z$ will denote a vector of covariates that has dimension $p$. The sample size will be noted by $n$.
+We will consider generally consider a setting of \textit{unconfoundedness}, meaning that conditional on covariates the treatment is as-good-as randomly assigned.
+Denoting the outcomes obtained in states of the world with treatment realization $D=d$ by $Y(d)$, this means
+\begin{equation*}
+    Y(0), Y(1) \perp D | Z.
+\end{equation*}
+In the context of \cite{chernozhukov2023genml} we will additionally make the assumption that the \textit{propensity score} $p(z) \equiv \Pr(D=1|Z=z)$ is a known function.
+The leading case of this is a stratified experiment, with $p(z) = 0.5$ being the special case of a completely randomized experiment.
+Generally, the literature also often allows for an unknown propensity score which poses the problem of --- high-dimensional --- first-step estimation.
+Note this is not the ``dimensionality'' issue considered here, which is about the complexity of conditional average treatment effects.
+The target of this literature is the \textit{conditional average treatment effect} (CATE), which is the average treatment effect for individuals with covariates $Z=z$:
+\begin{equation*}
+    CATE(Z) = s_0(Z) = \E[Y(1) - Y(0)|Z].
+\end{equation*}
+Our goal is to estimate and perform inference on this quantity.
 
-The data set for the template project is taken from
-\url{https://www.stem.org.uk/resources/elibrary/resource/28452/large-datasets-stats4schools}.
-It contains data on smoking habits in the UK, with 1691 observations and 12 variables.
-We consider only 4 of the 12 features for the prediction of the variable
-\texttt{smoking}: \texttt{marital\_status}, \texttt{highest\_qualification},
-\texttt{gender} and \texttt{age}. We model the dependence using a Logistic model. All
-numerical features are included linearly, while categorical features are expanded into
-dummy variables. Figures below illustrate the model predictions over the lifetime. You
-will find one figure and one estimation summary table for each installed programming
-language.
+Ideally, we would like to have a procedure with the following \textit{properties}:
+\begin{itemize}
+    \item[(1)] Consistent estimation in the sense that the mean-squared error (MSE) converges to 0;
+    \item[(2)] valid inference, i.e. confidence intervals, for $CATE(z)$;
+    \item[(3)] ability to adapt to high-dimensional covariate spaces (regimes where $p$ grows with $n$) without making sparsity assumptions;
+    \item[(4)] no functional form restrictions on $s_0(z)$.
+\end{itemize}
+However, we know from general results on optimal achievable non-parametric rates that such a procedure cannot exist.
+All proposed approaches then proceed by relaxing one or more of the requirements stated above. The following briefly summarizes some of the ideas, a more comprehensive list of reference can be found in \cite{causalml2024}.
+I focus in particular on sparsity assumptions and approximations to the CATE function, because these are two ideas that are taken up in the generic machine learning approach discussed later.
+\paragraph*{Sparsity}
+A first strategy is to place sparsity assumptions on the CATE function.
+For example, a common set of approaches postulates a linear conditional mean function:
+\begin{equation*}
+    \E[Y|Z] = \sum_{l=1}^{p_1}\alpha_l DX_l + \sum_{j=1}^{p_2}\beta_j W_j,
+\end{equation*}
+where the covariates $Z$ are split into those determining systematic heterogeneity of treatment effects, $X$, and controls, $W$.
+In this model we have hence have $s_0(Z) = S_0(X) = \alpha'X$ under randomization. In these setups we can allow for both $p_1$ and $p_2$ to grow with the sample size.
+Hence, the CATE function can be high-dimensional at least for a subset of the covariates.
+For these linear models Lasso-type approaches adapted to causal inference (so called "double" lasso) will perform well, under a condition called \textit{approximate sparsity}.
+Intuitively, this condition is fulfilled by DGPs where the magnitude of the (ordered) coefficients $\alpha_l, \beta_l$, decays sufficiently fast.
+One such DGP is for example given by
+\begin{equation*}
+    \alpha_l = \frac{1}{l^2}, \qquad \beta_j = \frac{1}{j^2}.
+\end{equation*}
+Assuming $p_1$, the dimension of heterogeneity, does not grow too fast and we have approximate sparsity, it is possible to show an asymptotic normal approximation, namely
+\begin{equation*}
+    \sqrt{n}(\hat{\alpha}-\alpha) \sim_a N(0,V)
+\end{equation*}
+where $V$ can be consistently estimated. These results are shown in \cite{belloni2015uniform} and \cite{belloni2018uniformly}.
+
+\paragraph*{Approximations to the CATE}
+Another approach is taken in \cite{semenova2021debiased}:
+They propose to focus on a \textit{low-dimensional} subset $X$ of the covariates $Z$, which the researcher has to decide on ex ante.
+Then, the new target for inference becomes the \textit{partial} CATE $s_0(X)$.
+Their paper then simultaneously allows for \textit{unconfoundedness} which poses the challenge of estimating $p(Z)$ --- potentially using machine learning methods --- in a first step.
+In a second step, they the nfocus on a \textit{linear} approximation to the (partial) CATE.
+Hence, they essentially use the following approximations to make the problem solvable:
+\begin{equation*}
+    s_0(Z) \approx s_0(X) \approx \beta'X.
+\end{equation*}
+The best linear predictor (BLP) problem in this case is given by
+\begin{equation*}
+    \min_{b\in\mathbb{R}^p} \E [(s_o(X) - X'b)^2].
+\end{equation*}
+We can then make use of the following identification result (which is sometimes referred to as the Horvitz-Thomson transform):
+\begin{equation*}
+    s_0(Z) = \E[YH|Z]
+\end{equation*}
+where $H = \frac{D-p(Z)}{p(Z)(1-p(Z))}$.
+It is then easy to derive the solution of the BLP problem above as
+\begin{equation*}
+    \beta = E[XX']^{-1}E[XHY]
+\end{equation*}
+which instead of the BLP of $Y$ uses the transformed outcome $HY$.
+For this we can then make use of standard least squares theory --- given that the nuisance parameter estimation in the first step satisfies certain regularity conditions --- and show
+\begin{equation*}
+    \hat{\beta} - \beta_0 \sim_a N(0, \Omega/N).
+\end{equation*}
+\subsection{Generic Machine Learning}
+
+\section{Simulation and Results}
 
 
-\begin{figure}[H]
-
-    \centering
-    \includegraphics[width=0.85\textwidth]{../figures/smoking_by_marital_status_using_python}
-
-    \caption{Model predictions of the smoking probability over the lifetime. Each
-        colored line represents a case where marital status is fixed to one of the
-        values present in the data set.}
-    \label{fig:predictions}
-
-\end{figure}
 
 
-\begin{table}[!h]
-    \input{../tables/estimation_results.tex}
-    \label{tab:summary}
-    \caption{Estimation results of the linear Logistic regression.}
-\end{table}
+\clearpage
+\newpage
 
-
-\begin{figure}[H]
-
-    \centering
-    \includegraphics[width=0.85\textwidth]{../figures/smoking_by_marital_status_using_r}
-
-    \caption{\emph{R:} Model predictions of the smoking probability over
-        the lifetime. Each colored line represents a case where marital status
-        is fixed to one of the values present in the data set.}
-    \label{fig:r-predictions}
-
-\end{figure}
-
-
-section introduction (end)
-
-
-
-\setstretch{1}
+% \setstretch{1}
 \printbibliography
 \setstretch{1.5}
-
 
 % \appendix
 
