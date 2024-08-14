@@ -47,4 +47,11 @@ DGP5 = DGP(
     treatment_effect=partial(tau_heterog, x_range=np.arange(0, 8), a=12, b=1 / 2),
 )
 
-DGPS = [DGP1, DGP2, DGP3, DGP4, DGP5]
+DGP6 = DGP(
+    name="dgp6",
+    main_effect=partial(main_constant, main=0),
+    propensity_score=partial(prop_cons, prop=0.5),
+    treatment_effect=partial(tau_constant, tau=0),
+)
+
+DGPS = [DGP1, DGP2, DGP3, DGP4, DGP5, DGP6]

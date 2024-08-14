@@ -41,8 +41,8 @@ for id_, kwargs in ID_TO_KWARGS.items():
         table = res.groupby(["dim"]).apply(
             lambda x: pd.Series(
                 {
-                    "mean": x["mse"].mean(),
-                    "std": x["mse"].std(),
+                    "mean": x["mse_blp"].mean(),
+                    "std": x["mse_blp"].std(),
                 },
             ),
         )

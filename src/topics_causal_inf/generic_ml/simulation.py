@@ -22,10 +22,11 @@ def simulation(
     rng: np.random.Generator,
 ) -> pd.DataFrame:
     """Run simulation using the generic_ml approach and WA 2018 DGP."""
-    mse = np.zeros(n_sims)
+    mse_blp = np.zeros(n_sims)
+    gates = np.zeros((n_sims, 5))
 
     for i in range(n_sims):
-        mse[i] = _single_experiment(
+        mse_blp[i], gates[i, :] = _single_experiment(
             n_obs=n_obs,
             dim=dim,
             n_splits=n_splits,
@@ -34,12 +35,18 @@ def simulation(
             rng=rng,
         )
 
-    out = pd.DataFrame(mse, columns=["mse"])
+    out = pd.DataFrame(mse_blp, columns=["mse_blp"])
 
     out["dgp"] = dgp.name
     out["n_obs"] = n_obs
     out["n_sims"] = n_sims
     out["dim"] = dim
+
+    true_gates = _simulate_true_gates(dgp=dgp, dim=dim, rng=rng)
+
+    for i in range(5):
+        out[f"gate_{i}"] = gates[:, i]
+        out[f"true_gate_{i}"] = true_gates[i]
 
     return out
 
@@ -75,4 +82,27 @@ def _single_experiment(
 
     data_eval["true"] = dgp.treatment_effect(data_eval)
 
-    return np.mean((data_eval["pred"] - data_eval["true"]) ** 2)
+    return np.mean((data_eval["pred"] - data_eval["true"]) ** 2), res.gates_params
+
+
+def _simulate_true_gates(
+    dgp: DGP,
+    dim: int,
+    rng: np.random.Generator,
+    n_obs: int = 1_000_000,
+) -> np.ndarray:
+    """Simulate true gates for the given DGP."""
+    data = data_wager_athey_2018(
+        n_obs=n_obs,
+        dim=dim,
+        dgp=dgp,
+        rng=rng,
+    )
+
+    feature_names = [f"x{i}" for i in range(dim)]
+
+    data["s_z"] = dgp.treatment_effect(data[feature_names])
+
+    data["s_z_quintiles"] = pd.qcut(data["s_z"], q=5, labels=np.arange(5))
+
+    return data.groupby("s_z_quintiles").apply("mean")["s_z"]
