@@ -1,3 +1,4 @@
+import functools
 from collections.abc import Callable
 from dataclasses import dataclass
 from typing import NamedTuple
@@ -31,6 +32,6 @@ class DGP(NamedTuple):
     """DGP for simulation."""
 
     name: str
-    main_effect: Callable[[pd.DataFrame], np.ndarray]
-    treatment_effect: Callable[[pd.DataFrame], np.ndarray]
-    propensity_score: Callable[[pd.DataFrame], np.ndarray]
+    main_effect: Callable[[pd.DataFrame], np.ndarray] | functools.partial
+    treatment_effect: Callable[[pd.DataFrame], np.ndarray] | functools.partial
+    propensity_score: Callable[[pd.DataFrame], np.ndarray] | functools.partial

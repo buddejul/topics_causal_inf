@@ -4,7 +4,7 @@ from pathlib import Path
 
 import numpy as np
 
-from topics_causal_inf.define_dgps import DGP3, DGP4, DGP5
+from topics_causal_inf.define_dgps import DGP3, DGP4, DGP5, DGP6
 
 SRC = Path(__file__).parent.resolve()
 ROOT = SRC.joinpath("..", "..").resolve()
@@ -21,10 +21,10 @@ RNG = np.random.default_rng()
 
 DIMS_TO_RUN = [10, 15, 30]
 
-DGPS_TO_RUN = [DGP3, DGP4, DGP5]
+DGPS_TO_RUN = [DGP3, DGP4, DGP5, DGP6]
 
 NUM_TREES = 100
 SUBSAMPLE_SHARE = 0.2
 N_OBS = 10_000
-N_SIM = 20
-N_SPLITS = 10
+N_SIM = 2
+N_SPLITS = 2

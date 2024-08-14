@@ -50,7 +50,7 @@ ID_TO_KWARGS = {
     for dgp in DGPS_TO_RUN
     for dim in DIMS_TO_RUN
     for dgen in DG_TO_RUN
-    if not (dgen == "wgan" and dim != 10)  # noqa: PLR2004
+    if not (dgen == "wgan" and (dim != 10 or dgp.name == "dgp6"))  # noqa: PLR2004
 }
 
 for id_, kwargs in ID_TO_KWARGS.items():

@@ -92,6 +92,10 @@ def _simulate_true_gates(
     n_obs: int = 1_000_000,
 ) -> np.ndarray:
     """Simulate true gates for the given DGP."""
+    # Check whether dgp.treatment_effect.keywords["tau"] raises error
+    if "tau" in dgp.treatment_effect.keywords:  # type: ignore[union-attr]
+        return np.ones(5) * dgp.treatment_effect.keywords["tau"]  # type: ignore[union-attr]
+
     data = data_wager_athey_2018(
         n_obs=n_obs,
         dim=dim,
