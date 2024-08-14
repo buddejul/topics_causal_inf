@@ -19,6 +19,12 @@ class GenericMLResult:
     blp_ci_hi: np.ndarray
     ml_fitted_d0: RegressorMixin
     ml_fitted_d1: RegressorMixin
+    gates_params: np.ndarray
+    gates_se: np.ndarray
+    gates_tvals: np.ndarray
+    gates_pvals: np.ndarray
+    gates_ci_lo: np.ndarray
+    gates_ci_hi: np.ndarray
 
 
 class DGP(NamedTuple):

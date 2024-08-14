@@ -10,16 +10,12 @@ from sklearn.base import RegressorMixin  # type: ignore[import-untyped]
 from sklearn.ensemble import RandomForestRegressor  # type: ignore[import-untyped]
 
 from topics_causal_inf.classes import DGP
-from topics_causal_inf.config import BLD, RNG
-from topics_causal_inf.define_dgps import DGP3, DGP4
+from topics_causal_inf.config import BLD, DGPS_TO_RUN, DIMS_TO_RUN, RNG
 from topics_causal_inf.generic_ml.simulation import simulation
-from topics_causal_inf.wa_replication.sim_config import DIM_VALS
 
 N_OBS = 10_000
 N_SIMS = 20
 N_SPLITS = 25
-
-DGP_TO_RUN = [DGP3, DGP4]
 
 
 class _Arguments(NamedTuple):
@@ -43,8 +39,8 @@ ID_TO_KWARGS = {
             CausalForest(n_estimators=100, max_samples=0.2),
         ),
     )
-    for dgp in DGP_TO_RUN
-    for dim in DIM_VALS
+    for dgp in DGPS_TO_RUN
+    for dim in DIMS_TO_RUN
     if not (dgp.name == "dgp5" and dim < 8)  # noqa: PLR2004
 }
 

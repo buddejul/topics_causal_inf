@@ -6,9 +6,7 @@ from typing import Annotated, NamedTuple
 import pandas as pd  # type: ignore[import-untyped]
 from pytask import Product, task
 
-from topics_causal_inf.config import BLD
-from topics_causal_inf.generic_ml.task_generic_ml_sim import DGP_TO_RUN
-from topics_causal_inf.wa_replication.sim_config import DIM_VALS
+from topics_causal_inf.config import BLD, DGPS_TO_RUN, DIMS_TO_RUN
 
 
 class _Arguments(NamedTuple):
@@ -22,10 +20,10 @@ ID_TO_KWARGS = {
         path_to_table=BLD / "generic_ml" / "tables" / f"generic_ml_{dgp.name}.tex",
         path_to_res=[
             BLD / "generic_ml" / "sims" / f"generic_ml_{dgp.name}_dim{dim}.pkl"
-            for dim in DIM_VALS
+            for dim in DIMS_TO_RUN
         ],
     )
-    for dgp in DGP_TO_RUN
+    for dgp in DGPS_TO_RUN
 }
 
 for id_, kwargs in ID_TO_KWARGS.items():

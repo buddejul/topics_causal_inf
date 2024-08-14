@@ -9,14 +9,11 @@ import pandas as pd  # type: ignore[import-untyped]
 from pytask import Product, task
 
 from topics_causal_inf.classes import DGP
-from topics_causal_inf.config import BLD, RNG, WGAN_GEN
+from topics_causal_inf.config import BLD, DIMS_TO_RUN, RNG, WGAN_GEN
 from topics_causal_inf.define_dgps import DGP3, DGP4
 from topics_causal_inf.py_wa_replication.py_wa_replication import simulation
-from topics_causal_inf.wa_replication.sim_config import DIM_VALS
 
 DGPS_TO_RUN = [DGP3, DGP4]
-
-DIMS_TO_RUN = DIM_VALS
 
 
 class _Arguments(NamedTuple):

@@ -28,20 +28,28 @@ def generic_ml(
     # Prepare inputs
 
     # Inference algorithm
-    blp_params, blp_se, ml_fitted_d0, ml_fitted_d1 = inference_algorithm(
-        data,
-        n_splits,
-        strategy,
-        ml_learner,
+    blp_params, blp_se, ml_fitted_d0, ml_fitted_d1, gates_params, gates_se = (
+        inference_algorithm(
+            data,
+            n_splits,
+            strategy,
+            ml_learner,
+        )
     )
 
-    # Compute t-values, lower and upper (1-alpha) confidence intervals
+    # BLP Compute t-values, lower and upper (1-alpha) confidence intervals
     blp_tvals = blp_params / blp_se
     blp_pvals = 2 * (1 - norm.cdf(np.abs(blp_tvals)))
     blp_ci_lo = blp_params - norm.ppf(1 - alpha / 2) * blp_se
     blp_ci_hi = blp_params + norm.ppf(1 - alpha / 2) * blp_se
 
-    # Find position of median of alpha_1 to pick a "median" machine learner
+    # GATES: Compute t-values, lower and upper (1-alpha) confidence intervals
+    gates_tvals = gates_params / gates_se
+    gates_pvals = 2 * (1 - norm.cdf(np.abs(gates_tvals)))
+    gates_ci_lo = gates_params - norm.ppf(1 - alpha / 2) * gates_se
+    gates_ci_hi = gates_params + norm.ppf(1 - alpha / 2) * gates_se
+
+    # Find position of median of alpha_2 to pick a "median" machine learner
     # Choose closest observation to force median is element of the set
     pos = np.argwhere(
         blp_params[:, 1]
@@ -58,6 +66,12 @@ def generic_ml(
         blp_ci_hi=np.median(blp_ci_hi, axis=0),
         ml_fitted_d0=ml_fitted_d0[int(pos)],
         ml_fitted_d1=ml_fitted_d1[int(pos)],
+        gates_params=np.median(gates_params, axis=0),
+        gates_se=np.median(gates_se, axis=0),
+        gates_tvals=np.median(gates_tvals, axis=0),
+        gates_pvals=np.median(gates_pvals, axis=0),
+        gates_ci_lo=np.median(gates_ci_lo, axis=0),
+        gates_ci_hi=np.median(gates_ci_hi, axis=0),
     )
 
 
@@ -66,13 +80,22 @@ def inference_algorithm(
     n_splits: int,
     strategy: str,
     ml_learner: tuple[RegressorMixin, RegressorMixin],
-) -> tuple[np.ndarray, np.ndarray, list[RegressorMixin], list[RegressorMixin]]:
+) -> tuple[
+    np.ndarray,
+    np.ndarray,
+    list[RegressorMixin],
+    list[RegressorMixin],
+    np.ndarray,
+    np.ndarray,
+]:
     """Implements the inference algorithm; see Algorithm 1 in the paper."""
     blp_params = np.zeros((n_splits, 2))
     blp_se = np.zeros((n_splits, 2))
     lambda_hat = np.zeros(n_splits)
     ml_fitted_d0 = list(np.zeros(n_splits))
     ml_fitted_d1 = list(np.zeros(n_splits))
+    gates_params = np.zeros((n_splits, 5))
+    gates_se = np.zeros((n_splits, 5))
 
     for i in range(n_splits):
         (
@@ -81,20 +104,30 @@ def inference_algorithm(
             lambda_hat[i],
             ml_fitted_d0[i],
             ml_fitted_d1[i],
+            gates_params[i, :],
+            gates_se[i, :],
         ) = estimate_single_split(
             data,
             strategy,
             ml_learner,
         )
 
-    return blp_params, blp_se, ml_fitted_d0, ml_fitted_d1
+    return blp_params, blp_se, ml_fitted_d0, ml_fitted_d1, gates_params, gates_se
 
 
 def estimate_single_split(
     data: pd.DataFrame,
     strategy: str,
     ml_learner: tuple[RegressorMixin, RegressorMixin],
-) -> tuple[np.ndarray, np.ndarray, float, RegressorMixin, RegressorMixin]:
+) -> tuple[
+    np.ndarray,
+    np.ndarray,
+    float,
+    RegressorMixin,
+    RegressorMixin,
+    np.ndarray,
+    np.ndarray,
+]:
     """Estimate BLP parameters for a single split."""
     pattern = r"^x\d+$"
     feature_names = data.filter(regex=pattern).columns.tolist()
@@ -122,6 +155,11 @@ def estimate_single_split(
         res = blp_ht_transform(main)
         blp_params = ["Intercept", "center(s_z)"]
 
+    # Estimate GATEs
+    gates = gates_ht_transform(main)
+    gates_params = [f"s_z_quintiles[T.{i}]" for i in np.arange(5)]
+
+    # Fit measure
     lambda_hat = fit_measure_cate(res.params[blp_params[1]], main, "blp")
 
     return (
@@ -130,6 +168,8 @@ def estimate_single_split(
         lambda_hat,
         ml_fitted_d0,
         ml_fitted_d1,
+        gates.params[gates_params],
+        gates.HC3_se[gates_params],
     )
 
 
@@ -253,3 +293,26 @@ def _check_strategy(strategy: str) -> None:
     if strategy not in ["blp_weighted_residual", "blp_ht_transform"]:
         msg = f"Invalid strategy: {strategy}."
         raise ValueError(msg)
+
+
+def gates_ht_transform(
+    data: pd.DataFrame,
+) -> sm.regression.linear_model.RegressionResultsWrapper:
+    """Estimate GATE parameters using the Horvit-Thompson transform."""
+    data["h"] = (data["d"] - data["p_z"]) / (data["p_z"] * (1 - data["p_z"]))
+
+    # Generate dummies for quantiles of ML proxy
+    data["s_z_quintiles"] = pd.qcut(data["s_z"], q=5, labels=np.arange(5))
+
+    formula = "y:h ~ -1 + b_z:h + p_z:s_z_quintiles:h + s_z_quintiles"
+
+    y, x = model_matrix(formula, data)
+
+    # Estimation using WLS following equation (3.3)
+    model = sm.OLS(
+        endog=y,
+        exog=x,
+        hasconst=False,
+    )
+
+    return model.fit()
