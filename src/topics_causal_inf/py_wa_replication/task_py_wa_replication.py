@@ -9,23 +9,30 @@ import pandas as pd  # type: ignore[import-untyped]
 from pytask import Product, task
 
 from topics_causal_inf.classes import DGP
-from topics_causal_inf.config import BLD, DIMS_TO_RUN, RNG, WGAN_GEN
-from topics_causal_inf.define_dgps import DGP3, DGP4
+from topics_causal_inf.config import (
+    BLD,
+    DGPS_TO_RUN,
+    DIMS_TO_RUN,
+    N_OBS,
+    N_SIM,
+    NUM_TREES,
+    RNG,
+    SUBSAMPLE_SHARE,
+    WGAN_GEN,
+)
 from topics_causal_inf.py_wa_replication.py_wa_replication import simulation
-
-DGPS_TO_RUN = [DGP3, DGP4]
 
 
 class _Arguments(NamedTuple):
     dgp: DGP
     path_to_data: Path
     data_generator: str
-    n_sim: int = 20
-    n_obs: int = 10_000
+    n_sim: int = N_SIM
+    n_obs: int = N_OBS
     dim: int = 10
     rng: np.random.Generator = RNG
-    num_trees: int = 100
-    sample_fraction: float = 0.2
+    num_trees: int = NUM_TREES
+    sample_fraction: float = SUBSAMPLE_SHARE
 
 
 DG_TO_RUN = ["standard", "wgan"]

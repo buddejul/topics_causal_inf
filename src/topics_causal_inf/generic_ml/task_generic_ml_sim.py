@@ -10,12 +10,18 @@ from sklearn.base import RegressorMixin  # type: ignore[import-untyped]
 from sklearn.ensemble import RandomForestRegressor  # type: ignore[import-untyped]
 
 from topics_causal_inf.classes import DGP
-from topics_causal_inf.config import BLD, DGPS_TO_RUN, DIMS_TO_RUN, RNG
+from topics_causal_inf.config import (
+    BLD,
+    DGPS_TO_RUN,
+    DIMS_TO_RUN,
+    N_OBS,
+    N_SIM,
+    N_SPLITS,
+    NUM_TREES,
+    RNG,
+    SUBSAMPLE_SHARE,
+)
 from topics_causal_inf.generic_ml.simulation import simulation
-
-N_OBS = 10_000
-N_SIMS = 20
-N_SPLITS = 25
 
 
 class _Arguments(NamedTuple):
@@ -24,7 +30,7 @@ class _Arguments(NamedTuple):
     path_to_res: Path
     ml_learner: tuple[RegressorMixin, RegressorMixin]
     n_obs: int = N_OBS
-    n_sims: int = N_SIMS
+    n_sims: int = N_SIM
     n_splits: int = N_SPLITS
     rng: np.random.Generator = RNG
 
@@ -35,8 +41,8 @@ ID_TO_KWARGS = {
         dgp=dgp,
         path_to_res=BLD / "generic_ml" / "sims" / f"generic_ml_{dgp.name}_dim{dim}.pkl",
         ml_learner=(
-            RandomForestRegressor(n_estimators=100, max_samples=0.2),
-            CausalForest(n_estimators=100, max_samples=0.2),
+            RandomForestRegressor(n_estimators=NUM_TREES, max_samples=SUBSAMPLE_SHARE),
+            CausalForest(n_estimators=NUM_TREES, max_samples=SUBSAMPLE_SHARE),
         ),
     )
     for dgp in DGPS_TO_RUN
