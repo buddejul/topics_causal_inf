@@ -10,12 +10,17 @@ documents = ["paper"]
 
 for document in documents:
 
-    @pytask.mark.skip()
     @pytask.mark.latex(
         script=DOCUMENTS / f"{document}.tex",
         document=BLD / "documents" / f"{document}.pdf",
         compilation_steps=cs.latexmk(
-            options=("--pdf", "--interaction=nonstopmode", "--synctex=1", "--cd"),
+            options=(
+                "--pdf",
+                "--interaction=nonstopmode",
+                "--synctex=1",
+                "--cd",
+                "--f",
+            ),
         ),
     )
     @pytask.task(id=document)
@@ -27,7 +32,6 @@ for document in documents:
         "produces": ROOT / f"{document}.pdf",
     }
 
-    @pytask.mark.skip()
     @pytask.task(id=document, kwargs=kwargs)
     def task_copy_to_root(depends_on, produces):
         """Copy a document to the root directory for easier retrieval."""
