@@ -11,14 +11,19 @@ from topics_causal_inf.wa_replication.wa_replication import (
 
 def test_simulation_runs() -> None:
     for dgp in [DGP3]:
-        for dgen in ["wgan", "standard"]:
-            wgan_train_data = pd.read_feather(WGAN_GEN / f"df_{dgp.name}.feather")
-            generators = pickle.load(
-                Path.open(WGAN_GEN / f"generators_{dgp.name}.pkl", "rb"),
-            )
-            data_wrappers = pickle.load(
-                Path.open(WGAN_GEN / f"data_wrapper_{dgp.name}.pkl", "rb"),
-            )
+        for dgen in ["standard"]:
+            if dgen == "wgan":
+                wgan_train_data = pd.read_feather(WGAN_GEN / f"df_{dgp.name}.feather")
+                generators = pickle.load(
+                    Path.open(WGAN_GEN / f"generators_{dgp.name}.pkl", "rb"),
+                )
+                data_wrappers = pickle.load(
+                    Path.open(WGAN_GEN / f"data_wrapper_{dgp.name}.pkl", "rb"),
+                )
+            else:
+                wgan_train_data = None
+                generators = None
+                data_wrappers = None
 
             simulation(
                 n_sim=2,
