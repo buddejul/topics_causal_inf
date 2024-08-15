@@ -4,7 +4,7 @@ from pathlib import Path
 import pandas as pd  # type: ignore[import-untyped]
 from topics_causal_inf.config import RNG, WGAN_GEN
 from topics_causal_inf.define_dgps import DGP3
-from topics_causal_inf.py_wa_replication.py_wa_replication import (
+from topics_causal_inf.wa_replication.wa_replication import (
     simulation,
 )
 

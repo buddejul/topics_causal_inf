@@ -20,7 +20,7 @@ from topics_causal_inf.config import (
     SUBSAMPLE_SHARE,
     WGAN_GEN,
 )
-from topics_causal_inf.py_wa_replication.py_wa_replication import simulation
+from topics_causal_inf.wa_replication.wa_replication import simulation
 
 
 class _Arguments(NamedTuple):
@@ -41,9 +41,9 @@ ID_TO_KWARGS = {
     f"{dgp.name}_{dim}_{dgen}": _Arguments(
         dgp=dgp,
         path_to_data=BLD
-        / "py_wa_replication"
+        / "wa_replication"
         / "sims"
-        / f"py_wa_replication_{dgp.name}_dim{dim}_{dgen}.pkl",
+        / f"wa_replication_{dgp.name}_dim{dim}_{dgen}.pkl",
         dim=dim,
         data_generator=dgen,
     )
@@ -56,7 +56,7 @@ ID_TO_KWARGS = {
 for id_, kwargs in ID_TO_KWARGS.items():
 
     @task(id=id_, kwargs=kwargs)  # type: ignore[arg-type]
-    def task_py_wa_replication_sims(
+    def task_wa_replication_sims(
         dgp: DGP,
         path_to_data: Annotated[Path, Product],
         n_sim: int,

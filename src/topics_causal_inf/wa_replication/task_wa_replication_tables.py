@@ -8,7 +8,7 @@ from pytask import Product, task
 
 from topics_causal_inf.classes import DGP
 from topics_causal_inf.config import BLD
-from topics_causal_inf.py_wa_replication.task_py_wa_replication import (
+from topics_causal_inf.wa_replication.task_wa_replication import (
     DGPS_TO_RUN,
     ID_TO_KWARGS,
 )
@@ -27,9 +27,9 @@ ID_TO_KWARGS_TABLES = {
         dgp=dgp,
         path_to_results=PATH_TO_RESULTS,
         path_to_table=BLD
-        / "py_wa_replication"
+        / "wa_replication"
         / "tables"
-        / f"py_wa_replication_{dgp.name}.tex",
+        / f"wa_replication_{dgp.name}.tex",
     )
     for dgp in DGPS_TO_RUN
 }
@@ -38,7 +38,7 @@ ID_TO_KWARGS_TABLES = {
 for id_, kwargs in ID_TO_KWARGS_TABLES.items():
 
     @task(id=id_, kwargs=kwargs)  # type: ignore[arg-type]
-    def task_py_wa_replication_table(
+    def task_wa_replication_table(
         dgp: DGP,
         path_to_results: dict[str, Path],
         path_to_table: Annotated[Path, Product],

@@ -15,8 +15,6 @@ WGAN_GEN = SRC / "wgan_generated"
 
 DOCUMENTS = ROOT.joinpath("documents").resolve()
 
-TEMPLATE_GROUPS = ["marital_status", "highest_qualification"]
-
 RNG = np.random.default_rng()
 
 DIMS_TO_RUN = [10, 15, 30]
