@@ -51,7 +51,7 @@ for _id, kwargs in ID_TO_KWARGS_GATES.items():
                 go.Histogram(
                     x=res[f"gate_{i}"],
                     histnorm="probability",
-                    name=f"gate_{i}",
+                    name=f"Group {i}",
                     marker_color=color,
                 ),
             )
@@ -61,8 +61,23 @@ for _id, kwargs in ID_TO_KWARGS_GATES.items():
                 line_color=color,
             )
 
-        fig.update_layout(barmode="overlay")
+        fig.update_layout(
+            barmode="overlay",
+            legend={
+                "yanchor": "top",
+                "y": -0.2,  # Position the legend below the plot area
+                "xanchor": "center",
+                "x": 0.5,
+                "orientation": "h",
+            },
+        )
         fig.update_traces(opacity=0.75)
+
+        fig.update_layout(
+            showlegend=False,
+        )
+
+        fig.update_layout(margin={"l": 10, "r": 10, "t": 10, "b": 10})
 
         fig.write_image(path_to_plot)
 
@@ -148,5 +163,11 @@ for _id, kwargs in ID_TO_KWARGS_CLANS.items():
             fig.update_xaxes(range=[0, 1], row=row, col=col)
 
         fig.update_traces(opacity=0.75)
+
+        fig.update_layout(
+            showlegend=False,
+        )
+
+        fig.update_layout(margin={"l": 10, "r": 10, "t": 10, "b": 10})
 
         fig.write_image(path_to_plot)

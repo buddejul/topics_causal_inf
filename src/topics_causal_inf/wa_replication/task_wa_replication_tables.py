@@ -8,6 +8,7 @@ from pytask import Product, task
 
 from topics_causal_inf.classes import DGP
 from topics_causal_inf.config import BLD
+from topics_causal_inf.utilities import clean_tex_table
 from topics_causal_inf.wa_replication.task_wa_replication import (
     DGPS_TO_RUN,
     ID_TO_KWARGS,
@@ -56,8 +57,7 @@ for id_, kwargs in ID_TO_KWARGS_TABLES.items():
             ["mean", "std"],
         )
 
-        res_to_table.to_latex(
-            path_to_table,
+        out = res_to_table.to_latex(
             formatters={
                 ("mse", "mean"): "{:,.2f}".format,
                 ("mse", "std"): "{:,.2f}".format,
@@ -66,3 +66,8 @@ for id_, kwargs in ID_TO_KWARGS_TABLES.items():
             },
             header=False,
         )
+
+        out = clean_tex_table(out)
+
+        # Write to file
+        path_to_table.write_text(out)

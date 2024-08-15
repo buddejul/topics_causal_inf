@@ -1,5 +1,6 @@
 """Utilities used throughout the project."""
 
+import re
 from copy import copy
 
 import numpy as np
@@ -156,3 +157,18 @@ def _check_dgp_and_dim_compatible(dgp: DGP, dim: int) -> None:
         length = len(dgp.treatment_effect.keywords["x_range"])
         msg = f"dgp.treatment_effect x_range has length {length} > dim {dim}."
         raise ValueError(msg)
+
+
+def clean_tex_table(table: str) -> str:
+    """Clean table produced by df.to_latex for paper."""
+    out = re.sub(r"\\begin{tabular}.*\n", "", table)
+    out = re.sub(r"\\end{tabular}.*\n", "", out)
+    out = re.sub(r"\\toprule.*\n", "", out)
+    out = re.sub(r"\\midrule.*\n", "", out)
+    out = re.sub(r"\\bottomrule.*\n", "", out)
+    out = re.sub("_", " ", out)
+    out = re.sub("standard", "Standard DGP", out)
+    out = re.sub("wgan", "WGAN DGP", out)
+    out = re.sub(r"data generator.*\n", "", out)
+    out = re.sub(r"\\cline.*\n", "", out)
+    return re.sub(r"dim .*\n", "", out)

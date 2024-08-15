@@ -7,6 +7,7 @@ import pandas as pd  # type: ignore[import-untyped]
 from pytask import Product, task
 
 from topics_causal_inf.config import BLD, DGPS_TO_RUN, DIMS_TO_RUN
+from topics_causal_inf.utilities import clean_tex_table
 
 
 class _Arguments(NamedTuple):
@@ -48,7 +49,13 @@ for id_, kwargs in ID_TO_KWARGS.items():
         )
 
         # Save table
-        table.to_latex(
-            path_to_table,
+        out = table.to_latex(
             float_format="%.3f",
+            header=False,
         )
+
+        # Remove all rows starting with "\begin{tabular}" and "\end{tabular}"
+        out = clean_tex_table(out)
+
+        # Write to file
+        path_to_table.write_text(out)
