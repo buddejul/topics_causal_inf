@@ -26,7 +26,10 @@ ID_TO_KWARGS_TABLES = {
     f"{dgp.name}": _Arguments(
         dgp=dgp,
         path_to_results=PATH_TO_RESULTS,
-        path_to_table=BLD / "tables" / f"py_wa_replication_{dgp.name}.tex",
+        path_to_table=BLD
+        / "py_wa_replication"
+        / "tables"
+        / f"py_wa_replication_{dgp.name}.tex",
     )
     for dgp in DGPS_TO_RUN
 }
