@@ -210,11 +210,28 @@ In CLAN, we are interested in characteristics $g(Y, D, Z)$ and we want to compar
 \end{equation*}
 
 \paragraph*{ML Method Selection}
-[Tbd.]
+Because the approach works with \textit{any} first stage machine learning method, a researcher might consider constructing proxies from different methods.
+To choose a method, the authors propose a criterion that maximizes the (absolute) correlation between the true CATE $s_0(Z)$ and the ML proxy $S(Z)$.
+Remember we can identify $\beta_2$ by the strategy discussed above. Because $\beta_2$ is the BLP of $s_0(Z)$ given $S(Z)$ we have
+\begin{equation*}
+    \beta_2 = \frac{Cov[s_0(Z), S(Z)]}{Var(S(Z))}.
+\end{equation*}
+By squaring and rescaling we are at the following criterion
+\begin{equation*}
+    \Lambda := |\beta_2|^2 Var(S(Z)) = Corr(s_0(Z), S(Z))^2 Var(s_0(Z)).
+\end{equation*}
+Hence, maximizing $\Lambda$ by choosing a proxy $S(Z)$, maximizes the desired correlation.
+Note the left-hand side can be estimated from the data, hence the criterion is feasible.
 
 \paragraph*{Split-based Inference}
-
-
+Finally, the paper proposes median-aggregating the results over multiple data splits to decrease dependence on the particular split.
+For example, for a given hypothesis of interest (for example values for BLP parameters $\beta_1, \beta_2$) we can consider properties of the \textit{median-aggregated p-value} defined by
+\begin{equation*}
+    p^+ = Med(p_A^+|Data)
+\end{equation*}
+where $Med(\cdot)$ denotes the median over datasplits and $p_A^+$ is a (one-sided) p-value in a given auxiliary sample $A$.
+Under regularity condition spelled out in the paper, it is possible to show that under $H_0$ p-values are uniform, that is inference is valid.
+\footnote{Depending on the exact regularity condition p-values might have to be multiplied by a factor of 2. The authors argue, however, that in their experience from simulations smaller p-values are typically appropriate.}
 \section{Simulation and Results}
 
 \subsection{Software Packages}
@@ -310,6 +327,32 @@ Describe how WGAN was performed.
 
         \multicolumn{3}{l}{\textit{Panel D:\ Placebo}} \\
         \input{../bld/generic_ml/tables/generic_ml_dgp6.tex} \\
+        \bottomrule
+    \end{tabular}
+
+\end{table}
+
+% Generic ML: BLP and GATES Coverage
+\begin{table}
+    \caption{Simulation Results: ML Generic --- BLP and GATES Coverage}
+    \center
+    \begin{tabular}{lccccccc}
+        Dimension & \multicolumn{7}{c}{Coverage} \\
+        \toprule
+        \multicolumn{8}{l}{\textit{Panel A:\ Original WA DGP 3}} \\
+        \input{../bld/generic_ml/tables/generic_ml_blp_gates_coverage_dgp3.tex} \\
+        \midrule
+
+        \multicolumn{8}{l}{\textit{Panel B:\ High Dimensional --- 4 Covariates}} \\
+        \input{../bld/generic_ml/tables/generic_ml_blp_gates_coverage_dgp4.tex} \\
+        \midrule
+
+        \multicolumn{8}{l}{\textit{Panel C:\ High Dimensional --- 8 Covariates}} \\
+        \input{../bld/generic_ml/tables/generic_ml_blp_gates_coverage_dgp5.tex} \\
+        \midrule
+
+        \multicolumn{8}{l}{\textit{Panel D:\ Placebo}} \\
+        \input{../bld/generic_ml/tables/generic_ml_blp_gates_coverage_dgp6.tex} \\
         \bottomrule
     \end{tabular}
 
