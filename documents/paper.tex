@@ -232,7 +232,7 @@ For example, for a given hypothesis of interest (for example values for BLP para
 where $Med(\cdot)$ denotes the median over datasplits and $p_A^+$ is a (one-sided) p-value in a given auxiliary sample $A$.
 Under regularity condition spelled out in the paper, it is possible to show that under $H_0$ p-values are uniform, that is inference is valid.
 \footnote{Depending on the exact regularity condition p-values might have to be multiplied by a factor of 2. The authors argue, however, that in their experience from simulations smaller p-values are typically appropriate.}
-\section{Simulation and Results}
+\section{Simulation Setup}
 
 \subsection{Software Packages}
 For the baseline causal forest estimator I rely on the `CausalForest' implementation provided by the \href{https://econml.azurewebsites.net/}{EconML} Python package.
@@ -303,14 +303,24 @@ Given the training time of these models I found both approaches to be infeasible
 One additional difficulty in using WGANs for CATE estimation is to define the target parameter/the "truth" against to which we want to evaluate the estimates.
 In the simpler case of ATE estimation, one approach is to draw a large sample from the generator, which we term the population, and to compute the ATE in this population by
 \begin{equation*}
-    ATE := \frac{1}{N^{pop}} Y_i(1) - Y_i(0).
+    ATE := \frac{1}{N^{pop}} \sum_{i=1}^{N^{pop}} Y_i(1) - Y_i(0).
 \end{equation*}
-However, a similar approach is not available for the CATE.
+However, a similar approach is not available for the CATE\@.
 While we could compute a similar average conditional on $X$, if there are continuous covariates that would be a bad approximation to the true underlying CATE since we end up with individual treatment effects.
 If, on the other hand, we fit a model to the population we know from that even if the WGAN preserved the high-dimensional structure it would not be possible to consistently estimate it.
 For the analysis I compute MSE using two approaches: Once using the true CATE function of the WA DGP and once using an estimated CATE based on the generated population using a causal forest approach.
 The second approach in particular should result in understated MSE estimates: If the WGAN generator cannot approximate the high-dimensional structure, using an estimated CATE based on a generated population will understate the difficulty of the problem.
 The first approach is of course not available in practice since the true CATE is unknown.
+
+\section{Simulation Results}
+Throughout the simulations I use $N=10,000$ observations and $40$ simulation repetitions, corresponding to \cite{wager2018estimation}.
+This low number is chosen to make the problem computationally feasible.
+I use $100$ trees in all causal forest estimators and a sub-sampling share of $0.2$.
+These parameters are much smaller than in the original~\cite{wager2018estimation} to reduce the run-time of the simulation.
+I still find very similar results in the replication parts, as outlined below.
+I follow~\cite{wager2018estimation} and report the expected MSE and expected coverage for CATE estimation by evaluating the predictions of the estimator on a new sample, also of size $10,000$.
+To give an indication of noisiness coming from both a low number of simulations and approximating expected MSE and coverage, I also report the standard deviation of simulation runs.
+For generic machine learning simulations I use a standard random forest as the baseline learner for $b_0(Z) = \E[Y(0)|Z]$ and a causal forest with similar hyperparameters as above for estimating $s_0(Z)$.
 
 \subsection{Results: WA Replication and WGAN}
 

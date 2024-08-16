@@ -48,18 +48,18 @@ def simulation(
     mse_pop_cate = np.zeros(n_sim)
     coverage = np.zeros(n_sim)
 
-    for i in range(n_sim):
-        if data_generator == "wgan":
-            pop_data = _generate_pop_data(
-                wgan_train_data=wgan_train_data,
-                data_generators=generators,  # type: ignore[arg-type]
-                data_wrappers=data_wrappers,  # type: ignore[arg-type]
-            )
-            pop_cate = _estimate_cf_cate(pop_data, dim)
-        else:
-            pop_data = None
-            pop_cate = None
+    if data_generator == "wgan":
+        pop_data = _generate_pop_data(
+            wgan_train_data=wgan_train_data,
+            data_generators=generators,  # type: ignore[arg-type]
+            data_wrappers=data_wrappers,  # type: ignore[arg-type]
+        )
+        pop_cate = _estimate_cf_cate(pop_data, dim)
+    else:
+        pop_data = None
+        pop_cate = None
 
+    for i in range(n_sim):
         mse[i], mse_pop_cate[i], coverage[i] = _experiment(
             n_obs=n_obs,
             dim=dim,

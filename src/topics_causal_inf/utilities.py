@@ -167,6 +167,7 @@ def clean_tex_table(table: str) -> str:
     out = re.sub(r"\\midrule.*\n", "", out)
     out = re.sub(r"\\bottomrule.*\n", "", out)
     out = re.sub("_", " ", out)
+    out = re.sub("NaN", "-", out)
     out = re.sub("standard", "Standard DGP", out)
     out = re.sub("wgan", "WGAN DGP", out)
     out = re.sub(r"data generator.*\n", "", out)
