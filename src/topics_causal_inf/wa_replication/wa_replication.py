@@ -45,6 +45,7 @@ def simulation(
     if data_generator == "wgan":
         _check_wgan_args(wgan_train_data, generators, data_wrappers)
     mse = np.zeros(n_sim)
+    mse_pop_cate = np.zeros(n_sim)
     coverage = np.zeros(n_sim)
 
     for i in range(n_sim):
@@ -54,10 +55,12 @@ def simulation(
                 data_generators=generators,  # type: ignore[arg-type]
                 data_wrappers=data_wrappers,  # type: ignore[arg-type]
             )
+            pop_cate = _estimate_cf_cate(pop_data, dim)
         else:
             pop_data = None
+            pop_cate = None
 
-        mse[i], coverage[i] = _experiment(
+        mse[i], mse_pop_cate[i], coverage[i] = _experiment(
             n_obs=n_obs,
             dim=dim,
             num_trees=num_trees,
@@ -66,12 +69,14 @@ def simulation(
             data_generator=data_generator,
             alpha=alpha,
             pop_data=pop_data,
+            pop_cate=pop_cate,
             rng=rng,
         )
 
     return pd.DataFrame(
         {
             "mse": mse,
+            "mse_pop_cate": mse_pop_cate,
             "coverage": coverage,
             "dim": dim,
             "data_generator": data_generator,
@@ -90,7 +95,8 @@ def _experiment(
     rng: np.random.Generator,
     alpha: float = 0.05,
     pop_data: pd.DataFrame | None = None,
-) -> tuple[float, float]:
+    pop_cate: CausalForest | None = None,
+) -> tuple[float, float, float]:
     feature_names = [f"x{i}" for i in range(dim)]
 
     if data_generator == "standard":
@@ -129,11 +135,17 @@ def _experiment(
     # Calculate (expected) MSE
     mse = np.mean((pred - true) ** 2)
 
+    if data_generator == "wgan" and pop_cate is not None:
+        true_pop_cate = pop_cate.predict(data_test[feature_names]).flatten()
+        mse_pop_cate = np.mean((pred - true_pop_cate) ** 2)
+    else:
+        mse_pop_cate = np.nan
+
     # Calculate (expected) coverage
     ci_lo, ci_hi = cf.predict_interval(X=data_test[feature_names], alpha=alpha)
     coverage = np.mean((ci_lo.flatten() <= true) & (true <= ci_hi.flatten()))
 
-    return mse, coverage
+    return mse, mse_pop_cate, coverage
 
 
 def _generate_pop_data(
@@ -175,3 +187,15 @@ def _check_wgan_args(
 
     if msg:
         raise ValueError(msg)
+
+
+def _estimate_cf_cate(pop: pd.DataFrame, dim: int) -> CausalForest:
+    feature_names = [f"x{i}" for i in range(dim)]
+    cf = CausalForest(max_samples=0.2)
+    cf.fit(
+        X=pop[feature_names],
+        T=pop["d"],
+        y=pop["y"],
+    )
+
+    return cf

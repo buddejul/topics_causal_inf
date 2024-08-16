@@ -52,6 +52,8 @@ for id_, kwargs in ID_TO_KWARGS_TABLES.items():
 
         res = res[res["dgp"] == dgp.name]
         res = res.drop(columns=["dgp"])
+        if "mse_cf" in res.columns:
+            res = res.drop(columns=["mse_cf"])
 
         res_to_table = res.groupby(["data_generator", "dim"]).agg(
             ["mean", "std"],
@@ -61,6 +63,8 @@ for id_, kwargs in ID_TO_KWARGS_TABLES.items():
             formatters={
                 ("mse", "mean"): "{:,.2f}".format,
                 ("mse", "std"): "{:,.2f}".format,
+                ("mse_pop_cate", "mean"): "{:,.2f}".format,
+                ("mse_pop_cate", "std"): "{:,.2f}".format,
                 ("coverage", "mean"): "{:,.2f}".format,
                 ("coverage", "std"): "{:,.2f}".format,
             },
