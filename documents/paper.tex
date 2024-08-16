@@ -252,7 +252,7 @@ A key question is how to design a DGP that is both ``realistic'', in the sense t
 The typical approach taken in the literature, e.g.\ in~\cite{wager2018estimation} is to postulate a DGP that has convenient analytical features and is easy to simulate.
 This simplifies the analysis but begs the question of relevance. Also, it leaves some degree of freedom to the researcher to choose a DGP that favourably displays the advantages of their proposed method.
 To address this issue, ``empirical'' methods for simulation design have been proposed, such as the WGAN approach in~\cite{athey2024wgan}.
-Without going into detail, the main idea is to train a \textit{generative} machine learning model, that can generate ``new'' observations by estimating the underlying DGP.\@
+Without going into detail, the main idea is to train a \textit{generative} machine learning model, that can generate ``new'' observations by estimating the underlying DGP\@.
 The training/optimization procedure can be thought of as a two-player game in which a \textit{generator} and a \textit{discriminator} compete in classifying observations as real or generated.
 
 While this approach can be usefully employed to design specific simulations given a dataset at hand for some questions, it also has some limitations, specifically with respect to the problem studied here.
@@ -261,7 +261,7 @@ However, for a given DGP with high-dimensional structure it cannot be possible t
 Else, if we had an estimate of the DGP, we could simply construct a plug-in estimator of the CATE, but as argued before such an estimator cannot exist.
 
 For this reason I resort to the analytical DGP presented in~\cite{wager2018estimation} (WA in the following).
-To illustrate the difficulty with using a WGAN generated DGP when the problem becomes high-dimensional, I also report results based on a generator that was trained on a draw from the WA dgp.
+To illustrate the difficulty with using a WGAN generated DGP when the problem becomes high-dimensional, I also report results based on a generator that was trained on a draw from the WA DGP\@.
 To the best of my knowledge, such simulation results are not available in the original or any other paper.
 \footnote{They do, however, assess robustness of their simulation setup in several dimensions, including sampling variability, in Section 5.}
 The following paragraphs explain the simulation setup in more detail.
@@ -298,12 +298,12 @@ A similar question is investigated in Figure 1 of~\cite{chernozhukov2023genml}.
 For generating the WGAN approximation to the DGP I follow the baseline approach described in ds-wgan package example.
 In particular, I train the generator and critic using the same hyperparameters.
 All fitting is performed twice, once for the distribution of $Y$ conditional on $X, D$ and once for the distribution of $X$ conditional on $D$.
-I train the model based on a sample of $N=100,000$ observations with dimension $d=10$ drawn from the baseline WA dgp as well as the extensions with high-dimensional CATEs ($\tau_2, \tau_3$).
+I train the model based on a sample of $N=100,000$ observations with dimension $d=10$ drawn from the baseline WA DGP as well as the extensions with high-dimensional CATEs ($\tau_2, \tau_3$).
 I deliberately chose a large sample (at least larger than the $N=10,000$ observations used throughout simulations) to attenuate noise resulting from this original sample draw.
 To further address this it would be ideal to increase $N$ further or aggregate the results over different initial sample draws.
 Given the training time of these models I found both approaches to be infeasible for the scope of this paper.
 
-One additional difficulty in using WGANs for CATE estimation is to define the target parameter/the "truth" against to which we want to evaluate the estimates.
+One additional difficulty in using WGANs for CATE estimation is to define the target parameter/the ``truth'' against to which we want to evaluate the estimates.
 In the simpler case of ATE estimation, one approach is to draw a large sample from the generator, which we term the population, and to compute the ATE in this population by
 \begin{equation*}
     ATE := \frac{1}{N^{pop}} \sum_{i=1}^{N^{pop}} Y_i(1) - Y_i(0).
@@ -316,7 +316,7 @@ The second approach in particular should result in understated MSE estimates: If
 The first approach is of course not available in practice since the true CATE is unknown.
 
 \section{Simulation Results}
-Throughout the simulations I use $N=10,000$ observations and $40$ simulation repetitions, corresponding to \cite{wager2018estimation}.
+Throughout the simulations I use $N=10,000$ observations and $40$ simulation repetitions, corresponding to~\cite{wager2018estimation}.
 This low number is chosen to make the problem computationally feasible.
 I use $100$ trees in all causal forest estimators and a sub-sampling share of $0.2$.
 These parameters are much smaller than in the original~\cite{wager2018estimation} to reduce the run-time of the simulation.
@@ -357,8 +357,8 @@ I use a main, auxiliary splitshare of $0.5$ throughout the analysis.
             \small
             \item \textbf{Notes}: This table reports simulation results for~\cite{wager2018estimation}.
             Results for $40$ simulation runs with number of observations $N=10,000$, number of trees $200$ and resampling share $0.2$.
-            \textit{Dimension} refers to the number of covariates in the DGP\@. \textit{Standard} DGP refers to sampling directly from the DGP, while \textit{WGAN} DGP refers to sampling from a WGAN trained based on a sample from the given DGP.
-            MSE and coverage are calculated based on a test sample of $10,000$ observations. MSE \textit{TRUE} evaluates against the true CATE function of the respective DGP, while MSE \textit{Pop} evaluates against a CATE function estimated based on a (large) population draw and only applies to the WGAN DGP.
+            \textit{Dimension} refers to the number of covariates in the DGP\@. \textit{Standard} DGP refers to sampling directly from the DGP, while \textit{WGAN} DGP refers to sampling from a WGAN trained based on a sample from the given DGP\@.
+            MSE and coverage are calculated based on a test sample of $10,000$ observations. MSE \textit{TRUE} evaluates against the true CATE function of the respective DGP, while MSE \textit{Pop} evaluates against a CATE function estimated based on a (large) population draw and only applies to the WGAN DGP\@.
             Panel A reports results for the third DGP in~\cite{wager2018estimation}; Panel B and C increase the heterogeneity of the CATE function to 4 and 8 covariates, respectively; Panel D reports results for a CATE of zero (placebo).
             For details see the text.
         \end{tablenotes}
