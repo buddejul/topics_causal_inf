@@ -21,9 +21,8 @@ dependencies:
 
   # Python template project dependencies
   - statsmodels
-  - numpy
+  - numpy<2
   - pandas >=2.2
-  - pdbpp
   - plotly >=5.2.0,<6
 
   # R template project dependencies
@@ -33,6 +32,24 @@ dependencies:
   - r-precommit
   - r-yaml
   - r-forcats
+  - r-grf
+  # TODO cannot install via mamba/conda for some reason?
+  # - r-httpgd  # Asynchronous http server graphics device for R.
+  - radian  # A 21 century R console
+
+  # Python dependencies
+  - scikit-learn
+  - statsmodels
+  - scipy
+  - pyarrow
 
   # Install project
-  - pip: [-e ., kaleido==0.1.0.post1]
+  - pip:
+      - -e .
+      - kaleido==0.1.0.post1
+      - formulaic
+      - pdbp
+      - snakeviz
+      - git+https://github.com/gsbDBI/ds-wgan
+      - econml
+      - ipywidgets

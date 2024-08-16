@@ -1,39 +1,30 @@
-# Templates for Reproducible Research Projects in Economics
+# Topics Causal Inference
 
-![MIT license](https://img.shields.io/github/license/OpenSourceEconomics/econ-project-templates)
-[![image](https://zenodo.org/badge/14557543.svg)](https://zenodo.org/badge/latestdoi/14557543)
-[![Documentation Status](https://readthedocs.org/projects/econ-project-templates/badge/?version=stable)](https://econ-project-templates.readthedocs.io/en/stable/)
-[![image](https://github.com/buddejul/topics_causal_inf/actions/workflows/main.yml/badge.svg)](https://github.com/buddejul/topics_causal_inf/actions/workflows/main.yml)
-[![image](https://codecov.io/gh/OpenSourceEconomics/econ-project-templates/branch/main/graph/badge.svg)](https://codecov.io/gh/OpenSourceEconomics/econ-project-templates)
-[![pre-commit.ci status](https://results.pre-commit.ci/badge/github/OpenSourceEconomics/econ-project-templates/main.svg)](https://results.pre-commit.ci/latest/github/OpenSourceEconomics/econ-project-templates/main)
+## Paper Structure
 
-This project provides a template for economists aimed at facilitating the production of
-reproducible research using the most commonly used programming languages in the field,
-such as Python, R, Julia, and Stata.
+### Section 1 - Designing a high-dimensional DGP
 
-> [!NOTE]
-> Although the underlying architecture supports all listed programming languages, the
-> current template implementation is limited to Python and R.
+Simulation results
 
-## Getting Started
+- Replication DGP 3 WA 2018
+- Extension DGP 4 with a larger number of covariates
+- d = 8, 15, 30
+- settings: 40 reps, 200 trees (for speed, also show SD)
+- For all DGPs: Also show for simulation based on WGAN
+  - Evaluate using true CATE; in principle, should be able to estimate this because for
+    any DGP
 
-You can find all necessary resources to get started on our
-[documentation](https://econ-project-templates.readthedocs.io/en/stable/).
+### Section 2
 
-## Contributing
+- Important question: How do we evaluate?
+  - Also RMSE or Coverage of true function, if that's what we care about in the end
+  - Would need to think about some decision criterion (RMSE --> Squared loss.)
+  - Look at missclassification error!
+- Do generic_ml with the same causal forest method; maybe also Lass/Elastic net (with
+  CV)
 
-We welcome suggestions on anything from improving the documentation to reporting bugs
-and requesting new features. Please open an
-[issue](https://github.com/buddejul/topics_causal_inf/issues) in these cases.
+### TODO
 
-If you want to work on a specific feature, we are more than happy to get you started!
-Please [get in touch briefly](https://www.wiwi.uni-bonn.de/gaudecker), this is a small
-team so there is no need for a detailed formal process.
-
-### Contributors
-
-@hmgaudecker @timmens @tobiasraabe @mj023
-
-### Former Contributors
-
-@janosg @PKEuS @philippmuller @julienschat @raholler
+- Implement causal forest with generic_ml
+- Coverage in addition to RMSE
+- Add "mixed" DGP where only the CATE is specified
