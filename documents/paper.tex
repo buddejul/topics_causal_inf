@@ -86,6 +86,8 @@
 
 \section{Introduction}
 
+
+
 \section{Methods}
 
 \subsection{Problem Setup}
@@ -164,6 +166,8 @@ For this we can then make use of standard least squares theory --- given that th
 \begin{equation*}
     \hat{\beta} - \beta_0 \sim_a N(0, \Omega/N).
 \end{equation*}
+
+% TODO Describe causal forest?
 
 \subsection{Generic Machine Learning}
 The generic ML approach allows want to place as little assumptions as possible on the data generating process, while maintaining valid inference.
@@ -568,6 +572,13 @@ The CLAN also correctly estimates the characteristics for least and most affecte
 \end{figure}
 
 \section{Conclusion}
+
+\begin{itemize}
+    \item Main difficulty: Informative DGP
+    \item Think of criterion relevant for decision
+    \item Computation power/time to run simulations
+    \item Combine WGAN and analytical CATE structure; still need to justify this.
+\end{itemize}
 
 \clearpage
 \newpage
