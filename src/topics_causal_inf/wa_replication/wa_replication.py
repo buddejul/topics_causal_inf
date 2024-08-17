@@ -143,7 +143,12 @@ def _experiment(
 
     # Calculate (expected) coverage
     ci_lo, ci_hi = cf.predict_interval(X=data_test[feature_names], alpha=alpha)
-    coverage = np.mean((ci_lo.flatten() <= true) & (true <= ci_hi.flatten()))
+    if data_generator == "wgan" and pop_cate is not None:
+        coverage = np.mean(
+            (ci_lo.flatten() <= true_pop_cate) & (true_pop_cate <= ci_hi.flatten()),
+        )
+    else:
+        coverage = np.mean((ci_lo.flatten() <= true) & (true <= ci_hi.flatten()))
 
     return mse, mse_pop_cate, coverage
 

@@ -322,6 +322,7 @@ I use $100$ trees in all causal forest estimators and a sub-sampling share of $0
 These parameters are much smaller than in the original~\cite{wager2018estimation} to reduce the run-time of the simulation.
 I still find very similar results in the replication parts, as outlined below.
 I follow~\cite{wager2018estimation} and report the expected MSE and expected coverage for CATE estimation by evaluating the predictions of the estimator on a new sample, also of size $10,000$.
+Throughout, I construct confidence intervals with $95\%$ nominal coverage.
 To give an indication of noisiness coming from both a low number of simulations and approximating expected MSE and coverage, I also report the standard deviation of simulation runs.
 For generic machine learning simulations I use a standard random forest as the baseline learner for $b_0(Z) = \E[Y(0)|Z]$ and a causal forest with similar hyperparameters as above for estimating $s_0(Z)$.
 When analysing group average treatment effects (GATES), I define five groups based on the treatment effect quintiles predicted by the ML proxy.
@@ -329,23 +330,43 @@ To approximate the true GATES induced by the proxy I estimate this on a large sa
 I use a main, auxiliary splitshare of $0.5$ throughout the analysis.
 
 \subsection{Results: WA Replication and WGAN}
+I report results for the causal forest approach in Table~\ref*{table:wa_rep_wgan}.
+First, the estimates for MSE --- using the true CATE function --- in column 2 are very close to the original results in~\cite{wager2018estimation}.
+I find a MSE for 0.02 for $d=10$ with an SD smaller than 0.01 while they find MSE estimates ranging from 0.02 to 0.03 for dimensions ranging from 2 to 8 and a similar SD\@.
+Notably, when I increase the dimensions to 15 and 30, respectively, I find comparable MSE estimates.
+This shows, that causal forests are able to perform well in a sparse setting where the subset of covariates that are pure noise is potentially large.
+The fourth row reports in Panel A reports simulation results based on an intermediate WGAN generator.
+The MSE is more than three times as large as the directly simulated DGP when using the true CATE to compute the MSE (\textit{MSE True}), but delivers a similar MSE estimate when using an estimated CATE based on a large population draw (\textit{MSE Pop}).
+Hence, using a WGAN generated DGP can in principle work well for simulation purposes when true CATE has a low-dimensional structure.
+Turning to coverage in the last columns, I find that coverage is slightly above nominal level for all dimensions, which is different to the original results reported in~\cite{wager2018estimation}, who report coverage levels far below nominal level (e.g. 0.73 for $d=8$).
+% [TODO Wgan coverage level after new simulation run using estimated CATE.]
 
+Panels B and C report results for a CATE with higher dimension. As expected the performance of the Causal Forest significantly deteriorates.
+MSE significantly increases, in particular for Panel C where the CATE depends on 8 covariates.
+Even with only 4 covariates, coverage is sinificantly below the nominal level ranging from 0.83 to 0.76. For 8 covariates coverage is below 0.5 for all dimensions.
+The WGAN generator approach result in similar MSE estimates when using the estimated CATE to compute MSE (0.22 vs. 0.19 using the standard approach).
+However, for the more complicated CATE in Panel C, the WGAN approach suggests an MSE that is far below the actual MSE using the standard approach (44.99 vs. 133.81).
+This is consistent with the previous argument, that the generator cannot preserve the high-dimensional structure. Hence, the CATE estimated based on a large population draw will be ``too simple''.
+For the remaining simulations using the generic machine learning approach I stick to the standard approach.
+Lastly, Panel D reports result for a Placebo CATE which is zero everywhere. The MSE is small and coverage is above nominal level.
+Hence I find no indication for the claim made in connection with Figure 1 in~\cite{chernozhukov2023genml}, that random forest machine learning estimators can easily suggest a heterogeneous CATE for a placebo DGP\@.
+\footnote{They, however, used a random forest directly (i.e.\ with a different target function and without modifications like honesty). Also, they probably reported out-of-the-box estimates which, since random forests are meant to address problems with more than one covariate, are prone to overfitting in this case. Using a random forest with cross-validation easily avoids overfitting.}
 \begin{table}
-    \caption{Simulation Results: WA Replication and WGAN}
+    \caption{Simulation Results: WA Replication and WGAN}\label{table:wa_rep_wgan}
     \begin{threeparttable}
         \center
         \begin{tabular}{lccccccc}
             & Dimension & MSE (True) & SD & MSE (Pop) & SD & Coverage & SD \\
             \toprule
-            \multicolumn{8}{l}{\textit{Panel A:\ Original WA DGP 3}} \\
+            \multicolumn{8}{l}{\textit{Panel A:\ Original WA DGP 3 --- 2 Covariate CATE}} \\
             \input{../bld/wa_replication/tables/wa_replication_dgp3.tex} \\
             \midrule
 
-            \multicolumn{8}{l}{\textit{Panel B:\ High Dimensional --- 4 Covariates}} \\
+            \multicolumn{8}{l}{\textit{Panel B:\ High Dimensional --- 4 Covariate CATE}} \\
             \input{../bld/wa_replication/tables/wa_replication_dgp4.tex} \\
             \midrule
 
-            \multicolumn{8}{l}{\textit{Panel C:\ High Dimensional --- 8 Covariates}} \\
+            \multicolumn{8}{l}{\textit{Panel C:\ High Dimensional --- 8 Covariate CATE}} \\
             \input{../bld/wa_replication/tables/wa_replication_dgp5.tex} \\
             \midrule
 
@@ -359,6 +380,7 @@ I use a main, auxiliary splitshare of $0.5$ throughout the analysis.
             Results for $40$ simulation runs with number of observations $N=10,000$, number of trees $200$ and resampling share $0.2$.
             \textit{Dimension} refers to the number of covariates in the DGP\@. \textit{Standard} DGP refers to sampling directly from the DGP, while \textit{WGAN} DGP refers to sampling from a WGAN trained based on a sample from the given DGP\@.
             MSE and coverage are calculated based on a test sample of $10,000$ observations. MSE \textit{TRUE} evaluates against the true CATE function of the respective DGP, while MSE \textit{Pop} evaluates against a CATE function estimated based on a (large) population draw and only applies to the WGAN DGP\@.
+            Coverage for $95\%$ confidence intervals reported.
             Panel A reports results for the third DGP in~\cite{wager2018estimation}; Panel B and C increase the heterogeneity of the CATE function to 4 and 8 covariates, respectively; Panel D reports results for a CATE of zero (placebo).
             For details see the text.
         \end{tablenotes}
@@ -366,24 +388,36 @@ I use a main, auxiliary splitshare of $0.5$ throughout the analysis.
 \end{table}
 
 \subsection{Results: Generic Machine Learning}
+I next turn to simulation results for the generic machine learning approach.
+In the auxiliary sample I use a random forest learner for the baseline conditional average $b_0(z)$ and a causal forest for the CATE $s_0(z)$.
+Results are median aggregated over 10 sample splits. For example, I use the median of the 10 parameter estimate for the heterogeneity loading $\hat{\beta_2^s}, s=1,\ldots,10$.
+I also use the trained model $s(z)$ from the median slope parameter to evaluate the performance, i.e.\ construct BLP predictions.
 
+\paragraph*{MSE}
+While this approach does not directly target the CATE, it is still useful to evaluate the MSE\@.
+After all, if the MSE is justified by some decision-theoretic approach, we might wonder whether trading off model misspecification for estimation precision results in smaller loss.
+The results in Table~\ref*{table:generic_ml_cate} show that the MSE for estimating the true CATE is significantly worse compared to the causal forest approach.
+While the BLP is of course not linear in the original covaiates, it seems like the gain estimation precision might still be offset by the approximation.
+This is expected for DGPs with a low-dimensional CATE in which causal forests perform well (Panels A and B), but I would have expected a relatively better performance in Panel C.
+One potential concern is that I used too few sample splits (the paper suggests 250 instead of 10), but this was computationally not feasible at this point.
+The generic ML does in fact perform better in the placebo setting in Panel D, where the MSE is only a tenth compared to that of the causal forest.
 
 \begin{table}
-    \caption{Simulation Results: ML Generic --- Cate Estimation}
+    \caption{Simulation Results: Generic ML --- Cate Estimation}\label{table:generic_ml_cate}
     \begin{threeparttable}
     \center
     \begin{tabular}{lcc}
         Dimension & MSE & SD \\
         \toprule
-        \multicolumn{3}{l}{\textit{Panel A:\ Original WA DGP 3}} \\
+        \multicolumn{3}{l}{\textit{Panel A:\ Original WA DGP 3 --- 2 Covariate CATE}} \\
         \input{../bld/generic_ml/tables/generic_ml_dgp3.tex} \\
         \midrule
 
-        \multicolumn{3}{l}{\textit{Panel B:\ High Dimensional --- 4 Covariates}} \\
+        \multicolumn{3}{l}{\textit{Panel B:\ High Dimensional --- 4 Covariate CATE}} \\
         \input{../bld/generic_ml/tables/generic_ml_dgp4.tex} \\
         \midrule
 
-        \multicolumn{3}{l}{\textit{Panel C:\ High Dimensional --- 8 Covariates}} \\
+        \multicolumn{3}{l}{\textit{Panel C:\ High Dimensional --- 8 Covariate CATE}} \\
         \input{../bld/generic_ml/tables/generic_ml_dgp5.tex} \\
         \midrule
 
@@ -397,7 +431,7 @@ I use a main, auxiliary splitshare of $0.5$ throughout the analysis.
         In the auxiliary sample the BCA is estimated by a random forest regressor, while the CATE is estimated by a causal forest.
         Results for $40$ simulation runs with number of observations $N=10,000$, number of trees $200$ and resampling share $0.2$.
         \textit{Dimension} refers to the number of covariates in the DGP\@.
-        MSE and coverage are calculated based on a test sample of $10,000$ observations. SD refers to the standard deviation of this quantity over the simulation runs.
+        MSE is calculated based on a test sample of $10,000$ observations. SD refers to the standard deviation of this quantity over the simulation runs.
         Panel A reports results for the third DGP in~\cite{wager2018estimation}; Panel B and C increase the heterogeneity of the CATE function to 4 and 8 covariates, respectively; Panel D reports results for a CATE of zero (placebo).
         For details see the text.
     \end{tablenotes}
@@ -407,7 +441,7 @@ I use a main, auxiliary splitshare of $0.5$ throughout the analysis.
 
 % Generic ML: BLP and GATES Coverage
 \begin{table}
-    \caption{Simulation Results: ML Generic --- BLP and GATES Coverage}
+    \caption{Simulation Results: Generic ML --- BLP and GATES Coverage}
     \begin{threeparttable}
         \center
         \begin{tabular}{lccccccc}
@@ -415,15 +449,15 @@ I use a main, auxiliary splitshare of $0.5$ throughout the analysis.
             & \multicolumn{2}{c}{Best Linear Predictor} & \multicolumn{5}{c}{Group Average Treatment Effects} \\
             & $\beta_1$ & $\beta_2$ & $\gamma_1$ & $\gamma_2$ & $\gamma_3$ & $\gamma_4$ & $\gamma_5$ \\
             \toprule
-            \multicolumn{8}{l}{\textit{Panel A:\ Original WA DGP 3}} \\
+            \multicolumn{8}{l}{\textit{Panel A:\ Original WA DGP 3 --- 2 Covariate CATE}} \\
             \input{../bld/generic_ml/tables/generic_ml_blp_gates_coverage_dgp3.tex} \\
             \midrule
 
-            \multicolumn{8}{l}{\textit{Panel B:\ High Dimensional --- 4 Covariates}} \\
+            \multicolumn{8}{l}{\textit{Panel B:\ High Dimensional --- 4 Covariate CATE}} \\
             \input{../bld/generic_ml/tables/generic_ml_blp_gates_coverage_dgp4.tex} \\
             \midrule
 
-            \multicolumn{8}{l}{\textit{Panel C:\ High Dimensional --- 8 Covariates}} \\
+            \multicolumn{8}{l}{\textit{Panel C:\ High Dimensional --- 8 Covariate CATE}} \\
             \input{../bld/generic_ml/tables/generic_ml_blp_gates_coverage_dgp5.tex} \\
             \midrule
 
@@ -438,7 +472,8 @@ I use a main, auxiliary splitshare of $0.5$ throughout the analysis.
             In the auxiliary sample the BCA is estimated by a random forest regressor, while the CATE is estimated by a causal forest.
             Results for $40$ simulation runs with number of observations $N=10,000$, number of trees $200$ and resampling share $0.2$.
             \textit{Dimension} refers to the number of covariates in the DGP\@.
-            MSE and coverage are calculated based on a test sample of $10,000$ observations. SD refers to the standard deviation of this quantity over the simulation runs.
+            Coverage is calculated based on a test sample of $10,000$ observations. SD refers to the standard deviation of this quantity over the simulation runs.
+            Coverage for $95\%$ confidence intervals reported.
             Panel A reports results for the third DGP in~\cite{wager2018estimation}; Panel B and C increase the heterogeneity of the CATE function to 4 and 8 covariates, respectively; Panel D reports results for a CATE of zero (placebo).
             For details see the text.
         \end{tablenotes}
@@ -453,19 +488,19 @@ I use a main, auxiliary splitshare of $0.5$ throughout the analysis.
      \begin{subfigure}[b]{0.475\textwidth}
          \centering
          \includegraphics[width=\textwidth]{../bld/generic_ml/plots/generic_ml_gates_dgp3.png}
-         \caption{Original WA DGP 3}\label{fig_gates:dgp3}
+         \caption{Original WA DGP 3 --- 2 Covariate CATE}\label{fig_gates:dgp3}
      \end{subfigure}
      \hfill
      \begin{subfigure}[b]{0.475\textwidth}
          \centering
          \includegraphics[width=\textwidth]{../bld/generic_ml/plots/generic_ml_gates_dgp4.png}
-         \caption{High-dimensional --- 4 Covariates}\label{fig_gates:dgp4}
+         \caption{High-dimensional --- 4 Covariate CATE}\label{fig_gates:dgp4}
      \end{subfigure}
 
      \begin{subfigure}[b]{0.475\textwidth}
          \centering
          \includegraphics[width=\textwidth]{../bld/generic_ml/plots/generic_ml_gates_dgp5.png}
-         \caption{High-dimensional --- 8 Covariates}\label{fig_gates:dgp5}
+         \caption{High-dimensional --- 8 Covariate CATE}\label{fig_gates:dgp5}
      \end{subfigure}
      \begin{subfigure}[b]{0.475\textwidth}
          \centering
@@ -488,19 +523,19 @@ I use a main, auxiliary splitshare of $0.5$ throughout the analysis.
      \begin{subfigure}[b]{0.475\textwidth}
          \centering
          \includegraphics[width=\textwidth]{../bld/generic_ml/plots/generic_ml_clans_dgp3.png}
-         \caption{Original WA DGP 3}\label{fig_clans:dgp3}
+         \caption{Original WA DGP 3 --- 2 Covariate CATE}\label{fig_clans:dgp3}
      \end{subfigure}
      \hfill
      \begin{subfigure}[b]{0.475\textwidth}
          \centering
          \includegraphics[width=\textwidth]{../bld/generic_ml/plots/generic_ml_clans_dgp4.png}
-         \caption{High-dimensional --- 4 Covariates}\label{fig_clans:dgp4}
+         \caption{High-dimensional --- 4 Covariate CATE}\label{fig_clans:dgp4}
      \end{subfigure}
 
      \begin{subfigure}[b]{0.475\textwidth}
          \centering
          \includegraphics[width=\textwidth]{../bld/generic_ml/plots/generic_ml_clans_dgp5.png}
-         \caption{High-dimensional --- 8 Covariates}\label{fig_clans:dgp5}
+         \caption{High-dimensional --- 8 Covariate CATE}\label{fig_clans:dgp5}
      \end{subfigure}
      \begin{subfigure}[b]{0.475\textwidth}
          \centering
