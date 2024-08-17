@@ -402,6 +402,21 @@ This is expected for DGPs with a low-dimensional CATE in which causal forests pe
 One potential concern is that I used too few sample splits (the paper suggests 250 instead of 10), but this was computationally not feasible at this point.
 The generic ML does in fact perform better in the placebo setting in Panel D, where the MSE is only a tenth compared to that of the causal forest.
 
+\paragraph*{Coverage, GATES and CLANS}
+Table~\ref*{table:generic_ml_coverage} verifies coverage properties of the generic ML procedure for both BLP parameters $\beta_1, \beta_2$ and GATES $\mu_1, \ldots, \mu_5$.
+Groups for GATES are defined by quintiles of predicted treatment effects from low ($\mu_1$) to high ($\mu_5$).
+I mostly find coverage levels close to the nominal level of 95\%, although with only 40 simulation runs the accuracy is of course severely limited.
+% TODO describe coverage properties, currently some seem off?
+Figure~\ref*{fig:gates} illustrates the performance of the GATES procedure for the four different DGPs\@.
+It shows the distribution of the estimates from the 40 simulation runs against an estimate of the true GATES from a large ($N=1,000,000$) sample draw.
+While quantitatively not precise, we can still see that generic ML procedure correctly estimates almost all GATES for all four DGPs.
+This is true even for the DGPs with increased heterogeneity dimension, as well as the placebo, where estimates are tightly centered around 0.
+
+Lastly, Figure~\ref*{fig:clans} shows estimates for the characteristics --- limited to covariates $x_1, \ldots, x_4$ --- of the least and most affected groups as predited by the ML proxy.
+If the CATE function does not depend on a covariate, the uniform distribution implies that the average characteristic for both groups is 0.5.
+This is confirmed in both Panels A (where $x_3$ and $x_4$ are noise) and the placebo DGP in Panel D (where all covariates are noise).
+The CLAN also correctly estimates the characteristics for least and most affected groups for covariates that determine heterogeneity, which can be seen in Panel A (for $x_3, x_4$) as well as Panels B and C.
+
 \begin{table}
     \caption{Simulation Results: Generic ML --- Cate Estimation}\label{table:generic_ml_cate}
     \begin{threeparttable}
@@ -441,7 +456,7 @@ The generic ML does in fact perform better in the placebo setting in Panel D, wh
 
 % Generic ML: BLP and GATES Coverage
 \begin{table}
-    \caption{Simulation Results: Generic ML --- BLP and GATES Coverage}
+    \caption{Simulation Results: Generic ML --- BLP and GATES Coverage}\label{table:generic_ml_coverage}
     \begin{threeparttable}
         \center
         \begin{tabular}{lccccccc}
