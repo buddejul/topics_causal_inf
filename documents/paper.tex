@@ -180,7 +180,6 @@ For this we can then make use of standard least squares theory --- given that th
     \hat{\beta} - \beta_0 \sim_a N(0, \Omega/N).
 \end{equation*}
 
-% TODO Describe causal forest?
 
 \subsection{Generic Machine Learning}
 The generic ML approach wants to place as little assumptions as possible on the data generating process, while maintaining valid inference.
@@ -358,7 +357,6 @@ The fourth row of Panel A reports simulation results based on an intermediate WG
 The MSE is more than three times as large compared to sampling directly from the DGP when using the true CATE to compute the MSE (\textit{MSE True}), but delivers a similar MSE estimate when using an estimated CATE based on a large population draw (\textit{MSE Pop}).
 Hence, using a WGAN-generated DGP can in principle work well for simulation purposes when the true CATE has a low-dimensional structure.
 Turning to coverage in the last columns, I find that coverage is slightly above nominal level for all dimensions, which is different to the original results reported in~\citet{wager2018estimation}, who report coverage levels far below nominal level (e.g. 0.73 for $d=8$).
-% [TODO Wgan coverage level after new simulation run using estimated CATE.]
 
 Panels B and C report results for a CATE with higher dimensionality. As expected, the performance of the Causal Forest significantly deteriorates.
 MSE significantly increases, in particular for Panel C where the CATE depends on 8 covariates.
