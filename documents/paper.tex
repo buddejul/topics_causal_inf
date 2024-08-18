@@ -77,82 +77,86 @@
 
 \begin{abstract}
     This term paper presents simulation results for two connected approaches to estimating conditional average treatment effects (CATE):
-    The \textit{causal forest} approach originally proposed in~\cite{wager2018estimation} and the \textit{generic machine learning} approach discussed in~\cite{chernozhukov2023genml}.
-    In a first part, I replicate simulation results for causal forest reported in the original paper that demonstrate the ability to estimate a sparse CATE function and perform valid inference.
-    I then continue to extend their analysis by lowering the degree of sparseness of the DGP and show that their method breaks down: RMSE is significantly increased and coverage is far below the nominal level.
-    I show that inference on the BLP is still possible using the generic machine learning approach. However, for the DGP I consider the RMSE is still considerably worse, illustrating a trade-off between estimation properties and informativeness of the inferential target.
-    As an additional point of interest I consider the design of high-dimensional monte carlo studies using the approach suggested by~\cite{athey2024wgan}.
+    The \textit{causal forest} approach originally proposed in~\citet{wager2018estimation} and the \textit{generic machine learning} approach discussed in~\citet{chernozhukov2023genml}.
+    In a first part, I replicate simulation results for the causal forest approach reported in the original paper that demonstrate the ability to estimate a sparse CATE function and perform valid inference.
+    I then continue to extend their analysis by lowering the degree of sparseness of the DGP and show that their method breaks down: MSE is significantly increased and coverage is far below the nominal level.
+    I show that inference on the BLP is still possible using the generic machine learning approach. However, for the DGPs I consider the MSE is still considerably worse, illustrating a trade-off between estimation properties and informativeness of the inferential target.
+    As an additional point of interest I consider the design of high-dimensional monte carlo studies using the WGAN approach suggested by~\citet{athey2024wgan}.
 \end{abstract}
 
 \clearpage
 
 \section{Introduction}
 Estimating treatment effects has become a standard practice in applied econometrics.
-Also, increasingly large datasets are utilized to investigate systematic heterogeneity.
-While this has the potential to increase our understanding of say the heterogneous effects of public policies,
-from a methodological perspective large datasets with many covariates come at the risk of increased researchers discretion.
+Moreover, increasingly often large datasets are utilized to investigate systematic heterogeneity.
+While this has the potential to increase our understanding of, say, the heterogneous effects of public policies,
+from a methodological perspective large datasets with many covariates come at the risk of increased researcher discretion.
 In this case, machine learning methods to systematically explore heterogeneity can be helpful to ``tie the researchers hands''.
-Furthermore, in high-dimensional settings with a potentially large number of irrelevant covariates, regularization built-in to many machine learning methods is required to deliver useful results.
-However, one concern is that many machine learning methods, like the very popular causal forests proposed in~\cite{wager2018estimation}, to estimate conditional average tretment effects rely on a low-dimensional structure of the conditional effects.
-Another approach proposed in~\cite{chernozhukov2023genml} is to only estimate low-dimensional features of conditional effects but utilizing machine learning methods in a first-step prediction exercise.
+Furthermore, in high-dimensional settings with a potentially large number of irrelevant covariates, the regularization inherent to many machine learning methods is required to deliver useful results.
+However, one concern is that many machine learning methods to estimate conditional average tretment effects, like the very popular causal forests proposed in~\citet{wager2018estimation}, rely on a low-dimensional structure of the conditional effects.
+Another approach proposed in~\citet{chernozhukov2023genml} is to only estimate low-dimensional features of conditional effects but utilizing machine learning methods in a first-step prediction exercise.
 The current paper investigates the performance of these two approaches for data generating processes both with low- and high-dimensional conditional treatment effect structures.
 
 \section{Methods}
 
 \subsection{Problem Setup}
 Throughout we consider a setting with a binary treatment denoted by $D$ taking on values in $\{0, 1\}$.
-$Z$ will denote a vector of covariates that has dimension $p$. The sample size will be noted by $n$.
-We will consider generally consider a setting of \textit{unconfoundedness}, meaning that conditional on covariates the treatment is as-good-as randomly assigned.
-Denoting the outcomes obtained in states of the world with treatment realization $D=d$ by $Y(d)$, this means
+$Z$ will denote a vector of covariates that has dimension $d$. The sample size will be noted by $n$.
+We will generally consider a setting of \textit{unconfoundedness}, meaning that conditional on covariates the treatment is as-good-as randomly assigned.
+Denoting the potential outcomes obtained in states of the world with treatment realization $d$ by $Y(d)$, this means
 \begin{equation*}
     Y(0), Y(1) \perp D | Z.
 \end{equation*}
-In the context of~\cite{chernozhukov2023genml} we will additionally make the assumption that the \textit{propensity score} $p(z) \equiv \Pr(D=1|Z=z)$ is a known function.
+In the context of~\citet{chernozhukov2023genml} we will additionally make the assumption that the \textit{propensity score} $p(z) \equiv \Pr(D=1|Z=z)$ is a known function.
 The leading case of this is a stratified experiment, with $p(z) = 0.5$ being the special case of a completely randomized experiment.
-Generally, the literature also often allows for an unknown propensity score which poses the problem of --- high-dimensional --- first-step estimation.
+Generally, the literature also often allows for an unknown propensity score which poses the problem of --- potentially high-dimensional --- first-step estimation.
 Note this is not the ``dimensionality'' issue considered here, which is about the complexity of conditional average treatment effects.
-The target of this literature is the \textit{conditional average treatment effect} (CATE), which is the average treatment effect for individuals with covariates $Z=z$:
+The target of this literature is the \textit{conditional average treatment effect} (CATE), which is the average treatment effect conditional on covariates $Z$:
 \begin{equation*}
     CATE(Z) = s_0(Z) = \E[Y(1) - Y(0)|Z].
 \end{equation*}
 Our goal is to estimate and perform inference on this quantity.
+In addition, we will also consider the baseline conditional average (BCA), which is defined as
+\begin{equation*}
+    BCA(Z) = b_0(Z) = \E[Y(0)|Z].
+\end{equation*}
 
-Ideally, we would like to have a procedure with the following \textit{properties}:
+Ideally, we would like to have a procedure for estimating the CATE with the following \textit{properties}:
 \begin{itemize}
     \item[(1)] Consistent estimation in the sense that the mean-squared error (MSE) converges to 0;
     \item[(2)] valid inference, i.e.\ confidence intervals, for $CATE(z)$;
-    \item[(3)] ability to adapt to high-dimensional covariate spaces (regimes where $p$ grows with $n$) without making sparsity assumptions;
+    \item[(3)] ability to adapt to high-dimensional covariate spaces (regimes where $d$ grows with $n$) without making sparsity assumptions;
     \item[(4)] no functional form restrictions on $s_0(z)$.
 \end{itemize}
 However, we know from general results on optimal achievable non-parametric rates that such a procedure cannot exist.
-All proposed approaches then proceed by relaxing one or more of the requirements stated above. The following briefly summarizes some of the ideas, a more comprehensive list of reference can be found in~\cite{causalml2024}.
-I focus in particular on sparsity assumptions and approximations to the CATE function, because these are two ideas that are taken up in the generic machine learning approach discussed later.
+All proposed approaches then proceed by relaxing one or more of the requirements stated above. The following briefly summarizes some of the ideas, a more comprehensive list of reference can be found in~\citet{causalml2024}.
+I focus in particular on sparsity assumptions and approximations to the CATE function, because these are two ideas that are taken up in the generic machine learning approach.
 \paragraph*{Sparsity}
 A first strategy is to place sparsity assumptions on the CATE function.
 For example, a common set of approaches postulates a linear conditional mean function:
 \begin{equation*}
-    \E[Y|Z] = \sum_{l=1}^{p_1}\alpha_l DX_l + \sum_{j=1}^{p_2}\beta_j W_j,
+    \E[Y|Z] = \sum_{l=1}^{d_1}\alpha_l DX_l + \sum_{j=1}^{d_2}\beta_j W_j,
 \end{equation*}
 where the covariates $Z$ are split into those determining systematic heterogeneity of treatment effects, $X$, and controls, $W$.
-In this model we have hence have $s_0(Z) = S_0(X) = \alpha'X$ under randomization. In these setups we can allow for both $p_1$ and $p_2$ to grow with the sample size.
+In this model we hence have $s_0(Z) = s_0(X) = \alpha'X$ under randomization. In these setups we can allow for both $d_1$ and $d_2$ to grow with the sample size.
 Hence, the CATE function can be high-dimensional at least for a subset of the covariates.
-For these linear models Lasso-type approaches adapted to causal inference (so called ``double'' lasso) will perform well, under a condition called \textit{approximate sparsity}.
+For these linear models lasso-type approaches adapted to causal inference (so called ``double'' lasso) will perform well, under a condition called \textit{approximate sparsity}.
 Intuitively, this condition is fulfilled by DGPs where the magnitude of the (ordered) coefficients $\alpha_l, \beta_l$, decays sufficiently fast.
 One such DGP is for example given by
 \begin{equation*}
     \alpha_l = \frac{1}{l^2}, \qquad \beta_j = \frac{1}{j^2}.
 \end{equation*}
-Assuming $p_1$, the dimension of heterogeneity, does not grow too fast and we have approximate sparsity, it is possible to show an asymptotic normal approximation, namely
+Assuming $d_1$, the dimension of heterogeneity, does not grow too fast and we have approximate sparsity, it is possible to show an asymptotic normal approximation, namely
 \begin{equation*}
     \sqrt{n}(\hat{\alpha}-\alpha) \sim_a N(0,V)
 \end{equation*}
-where $V$ can be consistently estimated. These results are shown in~\cite{belloni2015uniform} and~\cite{belloni2018uniformly}.
+where $V$ can be consistently estimated. These results are shown in~\citet{belloni2015uniform} and~\citet{belloni2018uniformly}.
 
 \paragraph*{Approximations to the CATE}
-~\cite{semenova2021debiased} propose to focus on a \textit{low-dimensional} subset $X$ of the covariates $Z$, which the researcher has to decide on ex ante.
+~\citet{semenova2021debiased} propose to focus on a \textit{low-dimensional} subset $X$ of the covariates $Z$, which the researcher has to decide on ex ante.
 Then, the new target for inference becomes the \textit{partial} CATE $s_0(X)$.
 Their paper then simultaneously allows for \textit{unconfoundedness} which poses the challenge of estimating $p(Z)$ --- potentially using machine learning methods --- in a first step.
-In a second step, they the nfocus on a \textit{linear} approximation to the (partial) CATE\@.
+In a second step, they then focus on a \textit{linear} approximation to the (partial) CATE\@.
 Hence, they essentially use the following approximations to make the problem solvable:
 \begin{equation*}
     s_0(Z) \approx s_0(X) \approx \beta'X.
@@ -179,11 +183,11 @@ For this we can then make use of standard least squares theory --- given that th
 % TODO Describe causal forest?
 
 \subsection{Generic Machine Learning}
-The generic ML approach allows want to place as little assumptions as possible on the data generating process, while maintaining valid inference.
+The generic ML approach wants to place as little assumptions as possible on the data generating process, while maintaining valid inference.
 This is achieved by (a) moving the inferential target to \textit{features} of the CATE (like the BLP) and (b) using sample splitting to derive inferential guarantees.
-Hence, this comes at the cost of potentially being able to only make statements about a (bad) approximation to the original inferential target as well as a loss in precision due to sample splitting.
+Hence, this comes at the cost of potentially being able to only make statements about an approximation to the original inferential target as well as a loss in precision due to sample splitting.
 However, there are a number of clear advantages: The researcher does not have to commit to a specific --- small --- set of covariates ex-ante or make sparsity assumptions.
-At the same time, the approach as discussed in~\cite{chernozhukov2023genml} does not allow for nuisance parameter estimation, i.e.\ requires a known propensity score.
+At the same time, the approach as discussed in~\citet{chernozhukov2023genml} does not allow for nuisance parameter estimation, i.e.\ requires a known propensity score.
 
 \paragraph*{Two Stages}
 A key feature of the approach is \textit{sample splitting}. Let $(M,A)$ denote two partitions of the sample into an auxiliary and a main dataset.
@@ -205,17 +209,20 @@ Here, the solutions are given by $\beta_1 = \E s_0(Z)$ and $\beta_2 = Cov[s_0(Z)
 A simple approach to estimating $\beta_1, \beta_2$ is again the Horvitz-Thompson transform discussed above.
 In particular, it is easy to show that the projection
 \begin{equation*}
-    HY = \mu_1 + \mu_2(S(Z) - \E S(Z)) + \varepsilon, \qquad \E[(1, S(Z) - \E S(Z))'\varphi] = 0
+    HY = \mu_1 + \mu_2(S(Z) - \E S(Z)) + \varepsilon, \qquad \E[(1, S(Z) - \E S(Z))'\varepsilon] = 0
 \end{equation*}
 identifies the BLP parameters, i.e.\ $\mu_1=\beta_1$ and $\mu_2 = \beta_2$.
-Estmation can then proceed based on the empirical analogue.
+Estimation can then proceed based on the empirical analogue.
 While inference \textit{conditional} on the split is standard, unconditional inference has to rely on median aggregation of many splits (discussed below).
+Importantly, no assumptions that ensure validity of the machine learning methods need to be placed.
+Intuitively, if the first-stage machine learning proxy is pure noise --- which could be the case if the DGP is high-dimensional and dense ---
+$\beta_2 = 0$ and the BLP is just given by the ATE\@.
 
 \paragraph*{Other Targets}
 Other potential targets beside the BLP of the CATE are sorted group average treatment effects (GATES) and classification analysis (CLAN).
 GATES are average effects for a finite number of groups that are induced by the first stage machine learning proxy.
 For example, we define five groups by the size of their predicted treatment effect $S(z)$.
-More generally, we can consider any finite partition of the real line $-\infty = I_0 < I_1 < \cdots < I_K = \infty$ and the define GATES by
+More generally, we can consider any finite partition of the real line $-\infty = I_0 < I_1 < \cdots < I_K = \infty$ and then define GATES by
 \begin{equation*}
     \gamma_k := \E[s_0(Z)|G_k], \qquad k=1,\ldots,K,
 \end{equation*}
@@ -225,19 +232,19 @@ In CLAN, we are interested in characteristics $g(Y, D, Z)$ and we want to compar
     \delta_g := \E[g(Y, D, Z)|G_g], \qquad g \in \{1, K\}.
 \end{equation*}
 
-\paragraph*{ML Method Selection}
-Because the approach works with \textit{any} first stage machine learning method, a researcher might consider constructing proxies from different methods.
-To choose a method, the authors propose a criterion that maximizes the (absolute) correlation between the true CATE $s_0(Z)$ and the ML proxy $S(Z)$.
-Remember we can identify $\beta_2$ by the strategy discussed above. Because $\beta_2$ is the BLP of $s_0(Z)$ given $S(Z)$ we have
-\begin{equation*}
-    \beta_2 = \frac{Cov[s_0(Z), S(Z)]}{Var(S(Z))}.
-\end{equation*}
-By squaring and rescaling we are at the following criterion
-\begin{equation*}
-    \Lambda := |\beta_2|^2 Var(S(Z)) = Corr(s_0(Z), S(Z))^2 Var(s_0(Z)).
-\end{equation*}
-Hence, maximizing $\Lambda$ by choosing a proxy $S(Z)$, maximizes the desired correlation.
-Note the left-hand side can be estimated from the data, hence the criterion is feasible.
+% \paragraph*{ML Method Selection}
+% Because the approach works with \textit{any} first stage machine learning method, a researcher might consider constructing proxies from different methods.
+% To choose a method, the authors propose a criterion that maximizes the (absolute) correlation between the true CATE $s_0(Z)$ and the ML proxy $S(Z)$.
+% Remember we can identify $\beta_2$ by the strategy discussed above. Because $\beta_2$ is the BLP of $s_0(Z)$ given $S(Z)$ we have
+% \begin{equation*}
+%     \beta_2 = \frac{Cov[s_0(Z), S(Z)]}{Var(S(Z))}.
+% \end{equation*}
+% By squaring and rescaling we are at the following criterion
+% \begin{equation*}
+%     \Lambda := |\beta_2|^2 Var(S(Z)) = Corr(s_0(Z), S(Z))^2 Var(s_0(Z)).
+% \end{equation*}
+% Hence, maximizing $\Lambda$ by choosing a proxy $S(Z)$, maximizes the desired correlation.
+% Note the left-hand side can be estimated from the data, hence the criterion is feasible.
 
 \paragraph*{Split-based Inference}
 Finally, the paper proposes median-aggregating the results over multiple data splits to decrease dependence on the particular split.
@@ -246,48 +253,37 @@ For example, for a given hypothesis of interest (for example values for BLP para
     p^+ = Med(p_A^+|Data)
 \end{equation*}
 where $Med(\cdot)$ denotes the median over datasplits and $p_A^+$ is a (one-sided) p-value in a given auxiliary sample $A$.
-Under regularity condition spelled out in the paper, it is possible to show that under $H_0$ p-values are uniform, that is inference is valid.
-\footnote{Depending on the exact regularity condition p-values might have to be multiplied by a factor of 2. The authors argue, however, that in their experience from simulations smaller p-values are typically appropriate.}
+Under regularity conditions spelled out in the paper, it is possible to show that under $H_0$ p-values are uniform, that is, inference is valid.\footnote{Depending on the exact regularity condition p-values might have to be multiplied by a factor of 2. The authors argue, however, that in their experience from simulations smaller p-values are typically appropriate.}
 \section{Simulation Setup}
 
-\subsection{Software Packages}
-For the baseline causal forest estimator I rely on the `CausalForest' implementation provided by the \href{https://econml.azurewebsites.net/}{EconML} Python package.
-This package implements a range of machine learning techniques for causal based on the statistical literature and making use of existing machine learning implementations in Python.
-For the generic ML part, I implemented most algorithms by hand since these only involve specifying linear regressions and sample splitting.
-Again, it is possible to flexibly use any of the machine learning estimators in this case, for example implemented in EconML or sklearn directly.
-For estimating DGPs using Wasserstein Generative Adversarial Networks (WGAN) I use the \href{https://github.com/gsbDBI/ds-wgan}{ds-wgan} implementation provided by the authors.
-Unfortunately, the code is not maintained and not compatible with recent versions of most basic Python libraries (e.g. NumPy 2.0).
-To avoid dependency conflicts with the other packages or manually debugging their code, I instead trained the generators in a Google Colab environment, which also comes at a significant speedup due to GPU availability.
-
-\subsection{Simulation Setup}
+\subsection{DGP and Parameters}
 \paragraph*{Designing a High-Dimensional DGP}
 A key question is how to design a DGP that is both ``realistic'', in the sense that the results are relevant to empirical applications, and still poses a high-dimensional problem.
-The typical approach taken in the literature, e.g.\ in~\cite{wager2018estimation} is to postulate a DGP that has convenient analytical features and is easy to simulate.
+The typical approach taken in the literature, e.g.\ in~\citet{wager2018estimation} is to postulate a DGP that has convenient analytical features and is easy to simulate.
 This simplifies the analysis but begs the question of relevance. Also, it leaves some degree of freedom to the researcher to choose a DGP that favourably displays the advantages of their proposed method.
-To address this issue, ``empirical'' methods for simulation design have been proposed, such as the WGAN approach in~\cite{athey2024wgan}.
+To address this issue, ``empirical'' methods for simulation design have been proposed, such as the approach in~\citet{athey2024wgan} based on Wasserstein Generative Adversarial Networks (WGANs).
 Without going into detail, the main idea is to train a \textit{generative} machine learning model, that can generate ``new'' observations by estimating the underlying DGP\@.
-The training/optimization procedure can be thought of as a two-player game in which a \textit{generator} and a \textit{discriminator} compete in classifying observations as real or generated.
+The training/optimization procedure can be thought of as a two-player game in which a \textit{generator} and a \textit{discriminator} compete in generating and classifying observations as real or generated, respectively.
 
 While this approach can be usefully employed to design specific simulations given a dataset at hand for some questions, it also has some limitations, specifically with respect to the problem studied here.
-In particular, we are concerned with a high-dimensional, non-sparse structure of the CATE functional --- this is what the generic ML method is robust against.
-However, for a given DGP with high-dimensional structure it cannot be possible train a generator that preserves this structure.
+We are concerned with a high-dimensional, non-sparse structure of the CATE functional --- this is what the generic ML method is designed for.
+However, for a given DGP with high-dimensional structure it cannot be possible to train a generator that preserves this structure.
 Else, if we had an estimate of the DGP, we could simply construct a plug-in estimator of the CATE, but as argued before such an estimator cannot exist.
 
-For this reason I resort to the analytical DGP presented in~\cite{wager2018estimation} (WA in the following).
-To illustrate the difficulty with using a WGAN generated DGP when the problem becomes high-dimensional, I also report results based on a generator that was trained on a draw from the WA DGP\@.
-To the best of my knowledge, such simulation results are not available in the original or any other paper.
-\footnote{They do, however, assess robustness of their simulation setup in several dimensions, including sampling variability, in Section 5.}
+For this reason I resort to the analytical DGP presented in~\citet{wager2018estimation} (WA in the following).
+To illustrate the difficulty with using a WGAN-generated DGP when the problem becomes high-dimensional, I also report results based on a generator that was trained on a draw from the WA DGP\@.
+To the best of my knowledge, such simulation results are not available in the original paper.\footnote{They do, however, assess robustness of their simulation setup in several dimensions, including sampling variability, in Section 5.}
 The following paragraphs explain the simulation setup in more detail.
 
 \paragraph*{WA DGP}
-I use the third DGP discussed in~\cite{wager2018estimation} as my baseline DGP\@.
-Covariates are generated as $X~U([0, 1]^d)$ and potential outcomes are drawn from $Y^{(0,1)} \sim N(\E[Y^{(0,1)}|X], 1)$.
-~\cite{wager2018estimation} refer to $d$ as the ``ambient dimension''. Note that in their simulations this is \textit{not} the dimensionality of the CATE function.
+I use the third DGP discussed in~\citet{wager2018estimation} as my baseline DGP\@.
+Covariates are generated as $X\sim U([0, 1]^d)$ and potential outcomes are drawn from $Y^{(0,1)} \sim N(\E[Y^{(0,1)}|X], 1)$.
+~\citet{wager2018estimation} refer to $d$ as the ``ambient dimension''. Note that in their simulations this is \textit{not} the dimensionality of the CATE function.
 Instead, the CATE function is generated by
 \begin{equation*}
     \tau_1(x) = \xi(x_1)\xi(x_2), \qquad \xi(x) = \frac{2}{1 + \exp^{-12(x-1/2)}}.
 \end{equation*}
-That is, the CATE function only depends on two covariates and the other $d-2$ covariates are pure noise (in terms of CATE estimation).
+That is, the CATE function only depends on two covariates and the other $d-2$ covariates are pure noise with respect to treatment effect estimation.
 The propensity score is kept constant at 0.5. I present results for various ambient dimensions $d$.
 
 I consider three additional DGPs: The first two DGPs increase the dimension of the CATE function, by increasing the number of arguments the function depends on.
@@ -305,15 +301,15 @@ I keep the rest of the DGP the same. Finally I also consider a \textit{placebo} 
 \end{equation*}
 The first two extensions are used to investigate the performance of the causal forest and generic machine learning approach when heterogeneity is high-dimensional.
 The placebo extension is used to investigate the danger of over-fitting where machine learning algorithms might be predict a heterogeneous treatment effect when there is actually none.
-A similar question is analyzed in Figure 1 of~\cite{chernozhukov2023genml}.
+A similar question is analyzed in Figure 1 of~\citet{chernozhukov2023genml}.
 
 \paragraph*{WGAN Approximation}
-For generating the WGAN approximation to the DGP I follow the baseline approach described in ds-wgan package example.
+For generating the WGAN approximation to the DGP I follow the baseline approach described in the \textit{ds-wgan} package example.
 In particular, I train the generator and critic using the same hyperparameters.
 All fitting is performed twice, once for the distribution of $Y$ conditional on $X, D$ and once for the distribution of $X$ conditional on $D$.
-I train the model based on a sample of $N=100,000$ observations with dimension $d=10$ drawn from the baseline WA DGP as well as the extensions with high-dimensional CATEs ($\tau_2, \tau_3$).
-I deliberately chose a large sample (at least larger than the $N=10,000$ observations used throughout simulations) to attenuate noise resulting from this original sample draw.
-To further address this it would be ideal to increase $N$ further or aggregate the results over different initial sample draws.
+I train the model based on a sample of $n=100,000$ observations with dimension $d=10$ drawn from the baseline WA DGP as well as the extensions with high-dimensional CATEs ($\tau_2, \tau_3$).
+I deliberately chose a large sample (at least larger than the $n=10,000$ observations used throughout simulations) to attenuate noise resulting from this original sample draw.
+To further address this it would be ideal to increase $n$ further or aggregate the results over different initial sample draws.
 Given the training time of these models I found both approaches to be infeasible for the scope of this paper.
 
 One additional difficulty in using WGANs for CATE estimation is to define the target parameter/the ``truth'' against to which we want to evaluate the estimates.
@@ -323,35 +319,45 @@ In the simpler case of ATE estimation, one approach is to draw a large sample fr
 \end{equation*}
 However, a similar approach is not available for the CATE\@.
 While we could compute a similar average conditional on $X$, if there are continuous covariates that would be a bad approximation to the true underlying CATE since we end up with individual treatment effects.
-If, on the other hand, we fit a model to the population we know from that even if the WGAN preserved the high-dimensional structure it would not be possible to consistently estimate it.
+An alternative would be to estimate the CATE function with one of the approaches outlined above. This should in principle be possible since the dimensionality of the problem is fixed while we can increase the population size arbitrarily.
+However, this obviously relies on the generator preserving the structure of the true CATE\@.
 For the analysis I compute MSE using two approaches: Once using the true CATE function of the WA DGP and once using an estimated CATE based on the generated population using a causal forest approach.
 The second approach in particular should result in understated MSE estimates: If the WGAN generator cannot approximate the high-dimensional structure, using an estimated CATE based on a generated population will understate the difficulty of the problem.
-The first approach is of course not available in practice since the true CATE is unknown.
+The first approach is of course not available in practice since the true CATE is unknown.\footnote{At the same time, an upward biased MSE should be expected if we cannot sufficiently reduce the noise when sampling from the original DGP and training the generator.}
+
+\subsection{Software Packages}
+For the baseline causal forest estimator I rely on the `CausalForest' implementation provided by the \href{https://econml.azurewebsites.net/}{EconML} Python package.
+This package implements a range of machine learning techniques for causal inference based on the statistical literature and makes use of existing machine learning implementations in Python.
+For the generic ML part, I implemented most algorithms myself since these only involve specifying linear regressions and sample splitting.
+Again, it is possible to flexibly use any of the machine learning estimators in this case, for example implemented in EconML or sklearn --- a popular machine leanring environment --- directly.
+For estimating DGPs using Wasserstein Generative Adversarial Networks (WGAN) I use the \href{https://github.com/gsbDBI/ds-wgan}{ds-wgan} implementation provided by the authors.
+Unfortunately, the code is not maintained and not compatible with recent versions of most basic Python libraries (e.g. NumPy 2.0).
+To avoid dependency conflicts with the other packages or manually debugging their code, I instead trained the generators in a Google Colab environment, which also comes at a significant speedup due to GPU availability.
 
 \section{Simulation Results}
-Throughout the simulations I use $N=10,000$ observations and $40$ simulation repetitions, corresponding to~\cite{wager2018estimation}.
+Throughout the simulations I use $n=10,000$ observations and $40$ simulation repetitions, corresponding to~\citet{wager2018estimation}.
 This low number is chosen to make the problem computationally feasible.
 I use $100$ trees in all causal forest estimators and a sub-sampling share of $0.2$.
-These parameters are much smaller than in the original~\cite{wager2018estimation} to reduce the run-time of the simulation.
+These parameters are much smaller than in the original~\citet{wager2018estimation} to reduce the run-time of the simulation.
 I still find very similar results in the replication parts, as outlined below.
-I follow~\cite{wager2018estimation} and report the expected MSE and expected coverage for CATE estimation by evaluating the predictions of the estimator on a new sample, also of size $10,000$.
+I follow~\citet{wager2018estimation} and report the expected MSE and expected coverage for CATE estimation by evaluating the predictions of the estimator on a new sample, also of size $10,000$.
 Throughout, I construct confidence intervals with $95\%$ nominal coverage.
 To give an indication of noisiness coming from both a low number of simulations and approximating expected MSE and coverage, I also report the standard deviation of simulation runs.
 For generic machine learning simulations I use a standard random forest as the baseline learner for $b_0(Z) = \E[Y(0)|Z]$ and a causal forest with similar hyperparameters as above for estimating $s_0(Z)$.
 When analysing group average treatment effects (GATES), I define five groups based on the treatment effect quintiles predicted by the ML proxy.
-To approximate the true GATES induced by the proxy I estimate this on a large sample of size $N=1,000,000$; as noted in the paper, if the size of the auxiliary sample diverges the randomness due to splitting and training the proxy can be ignored.
+To approximate the true GATES induced by the proxy I estimate this on a large sample of size $n=1,000,000$; as noted in the paper, if the size of the auxiliary sample diverges the randomness due to splitting and training the proxy can be ignored.
 I use a main, auxiliary splitshare of $0.5$ throughout the analysis.
 
 \subsection{Results: WA Replication and WGAN}
 I report results for the causal forest approach in Table~\ref*{table:wa_rep_wgan}.
-First, the estimates for MSE --- using the true CATE function --- in column 2 are very close to the original results in~\cite{wager2018estimation}.
+First, the estimates for MSE --- using the true CATE function --- in column 2 are very close to the original results in~\citet{wager2018estimation}.
 I find a MSE for 0.02 for $d=10$ with an SD smaller than 0.01 while they find MSE estimates ranging from 0.02 to 0.03 for dimensions ranging from 2 to 8 and a similar SD\@.
 Notably, when I increase the dimensions to 15 and 30, respectively, I find comparable MSE estimates.
 This shows, that causal forests are able to perform well in a sparse setting where the subset of covariates that are pure noise is potentially large.
 The fourth row reports in Panel A reports simulation results based on an intermediate WGAN generator.
 The MSE is more than three times as large as the directly simulated DGP when using the true CATE to compute the MSE (\textit{MSE True}), but delivers a similar MSE estimate when using an estimated CATE based on a large population draw (\textit{MSE Pop}).
-Hence, using a WGAN generated DGP can in principle work well for simulation purposes when true CATE has a low-dimensional structure.
-Turning to coverage in the last columns, I find that coverage is slightly above nominal level for all dimensions, which is different to the original results reported in~\cite{wager2018estimation}, who report coverage levels far below nominal level (e.g. 0.73 for $d=8$).
+Hence, using a WGAN-generated DGP can in principle work well for simulation purposes when true CATE has a low-dimensional structure.
+Turning to coverage in the last columns, I find that coverage is slightly above nominal level for all dimensions, which is different to the original results reported in~\citet{wager2018estimation}, who report coverage levels far below nominal level (e.g. 0.73 for $d=8$).
 % [TODO Wgan coverage level after new simulation run using estimated CATE.]
 
 Panels B and C report results for a CATE with higher dimension. As expected the performance of the Causal Forest significantly deteriorates.
@@ -362,7 +368,7 @@ However, for the more complicated CATE in Panel C, the WGAN approach suggests an
 This is consistent with the previous argument, that the generator cannot preserve the high-dimensional structure. Hence, the CATE estimated based on a large population draw will be ``too simple''.
 For the remaining simulations using the generic machine learning approach I stick to the standard approach.
 Lastly, Panel D reports result for a Placebo CATE which is zero everywhere. The MSE is small and coverage is above nominal level.
-Hence I find no indication for the claim made in connection with Figure 1 in~\cite{chernozhukov2023genml}, that random forest machine learning estimators can easily suggest a heterogeneous CATE for a placebo DGP\@.
+Hence I find no indication for the claim made in connection with Figure 1 in~\citet{chernozhukov2023genml}, that random forest machine learning estimators can easily suggest a heterogeneous CATE for a placebo DGP\@.
 \footnote{They, however, used a random forest directly (i.e.\ with a different target function and without modifications like honesty). Also, they probably reported out-of-the-box estimates which, since random forests are meant to address problems with more than one covariate, are prone to overfitting in this case. Using a random forest with cross-validation easily avoids overfitting.}
 \begin{table}
     \caption{Simulation Results: WA Replication and WGAN}\label{table:wa_rep_wgan}
@@ -389,12 +395,12 @@ Hence I find no indication for the claim made in connection with Figure 1 in~\ci
         \end{tabular}
         \begin{tablenotes}
             \small
-            \item \textbf{Notes}: This table reports simulation results for~\cite{wager2018estimation}.
-            Results for $40$ simulation runs with number of observations $N=10,000$, number of trees $200$ and resampling share $0.2$.
+            \item \textbf{Notes}: This table reports simulation results for~\citet{wager2018estimation}.
+            Results for $40$ simulation runs with number of observations $n=10,000$, number of trees $200$ and resampling share $0.2$.
             \textit{Dimension} refers to the number of covariates in the DGP\@. \textit{Standard} DGP refers to sampling directly from the DGP, while \textit{WGAN} DGP refers to sampling from a WGAN trained based on a sample from the given DGP\@.
             MSE and coverage are calculated based on a test sample of $10,000$ observations. MSE \textit{TRUE} evaluates against the true CATE function of the respective DGP, while MSE \textit{Pop} evaluates against a CATE function estimated based on a (large) population draw and only applies to the WGAN DGP\@.
             Coverage for $95\%$ confidence intervals reported.
-            Panel A reports results for the third DGP in~\cite{wager2018estimation}; Panel B and C increase the heterogeneity of the CATE function to 4 and 8 covariates, respectively; Panel D reports results for a CATE of zero (placebo).
+            Panel A reports results for the third DGP in~\citet{wager2018estimation}; Panel B and C increase the heterogeneity of the CATE function to 4 and 8 covariates, respectively; Panel D reports results for a CATE of zero (placebo).
             For details see the text.
         \end{tablenotes}
     \end{threeparttable}
@@ -426,7 +432,7 @@ At this point I don't have a good explanation for this. Note the true parameter 
 Hence, this could be a parameter at the boundary issue.
 
 Figure~\ref*{fig:gates} illustrates the performance of the GATES procedure for the four different DGPs\@.
-It shows the distribution of the estimates from the 40 simulation runs against an estimate of the true GATES from a large ($N=1,000,000$) sample draw.
+It shows the distribution of the estimates from the 40 simulation runs against an estimate of the true GATES from a large ($n=1,000,000$) sample draw.
 While quantitatively not precise, we can still see that generic ML procedure correctly estimates almost all GATES for all four DGPs.
 This is true even for the DGPs with increased heterogeneity dimension, as well as the placebo, where estimates are tightly centered around 0.
 
@@ -460,12 +466,12 @@ The CLAN also correctly estimates the characteristics for least and most affecte
     \end{tabular}
     \begin{tablenotes}
         \small
-        \item \textbf{Notes}: This table reports simulation results for~\cite{chernozhukov2023genml}.
+        \item \textbf{Notes}: This table reports simulation results for~\citet{chernozhukov2023genml}.
         In the auxiliary sample the BCA is estimated by a random forest regressor, while the CATE is estimated by a causal forest.
-        Results for $40$ simulation runs with number of observations $N=10,000$, number of trees $200$ and resampling share $0.2$.
+        Results for $40$ simulation runs with number of observations $n=10,000$, number of trees $200$ and resampling share $0.2$.
         \textit{Dimension} refers to the number of covariates in the DGP\@.
         MSE is calculated based on a test sample of $10,000$ observations. SD refers to the standard deviation of this quantity over the simulation runs.
-        Panel A reports results for the third DGP in~\cite{wager2018estimation}; Panel B and C increase the heterogeneity of the CATE function to 4 and 8 covariates, respectively; Panel D reports results for a CATE of zero (placebo).
+        Panel A reports results for the third DGP in~\citet{wager2018estimation}; Panel B and C increase the heterogeneity of the CATE function to 4 and 8 covariates, respectively; Panel D reports results for a CATE of zero (placebo).
         For details see the text.
     \end{tablenotes}
 \end{threeparttable}
@@ -501,13 +507,13 @@ The CLAN also correctly estimates the characteristics for least and most affecte
 
         \begin{tablenotes}
             \small
-            \item \textbf{Notes}: This table reports simulation results for~\cite{chernozhukov2023genml} studying coverage for the BLP and GATES parameters (five groups).
+            \item \textbf{Notes}: This table reports simulation results for~\citet{chernozhukov2023genml} studying coverage for the BLP and GATES parameters (five groups).
             In the auxiliary sample the BCA is estimated by a random forest regressor, while the CATE is estimated by a causal forest.
-            Results for $40$ simulation runs with number of observations $N=10,000$, number of trees $200$ and resampling share $0.2$.
+            Results for $40$ simulation runs with number of observations $n=10,000$, number of trees $200$ and resampling share $0.2$.
             \textit{Dimension} refers to the number of covariates in the DGP\@.
             Coverage is calculated based on a test sample of $10,000$ observations. SD refers to the standard deviation of this quantity over the simulation runs.
             Coverage for $95\%$ confidence intervals reported.
-            Panel A reports results for the third DGP in~\cite{wager2018estimation}; Panel B and C increase the heterogeneity of the CATE function to 4 and 8 covariates, respectively; Panel D reports results for a CATE of zero (placebo).
+            Panel A reports results for the third DGP in~\citet{wager2018estimation}; Panel B and C increase the heterogeneity of the CATE function to 4 and 8 covariates, respectively; Panel D reports results for a CATE of zero (placebo).
             For details see the text.
         \end{tablenotes}
     \end{threeparttable}
@@ -544,7 +550,7 @@ The CLAN also correctly estimates the characteristics for least and most affecte
      \floatfoot{\textbf{Notes}: This figure reports simulation results for confidence intervals of BLP parameters of the generic machine learning approach.
      For each of the four DGPs, it plots the distribution of both lower and upper confidence intervals for $\beta_1, \beta_2$ over the simulation runs.
      Lower ends are displayed red, upper blue.
-     The dashed line indicates the true GATES using a large population draw. Sample size $N=10,000$ and $40$ simulation runs.
+     The dashed line indicates the true GATES using a large population draw. Sample size $n=10,000$ and $40$ simulation runs.
      }
 
 \end{figure}
@@ -579,7 +585,7 @@ The CLAN also correctly estimates the characteristics for least and most affecte
 
      \floatfoot{\textbf{Notes}: This figure reports simulation results for GATES parameters of the generic machine learning approach.
      For each of the four DGPs, it plots the distribution of each of the five GATE parameter estimates over the simulation runs.
-     The dashed line indicates the true GATES using a large population draw. Sample size $N=10,000$ and $40$ simulation runs.
+     The dashed line indicates the true GATES using a large population draw. Sample size $n=10,000$ and $40$ simulation runs.
      }
 
 \end{figure}
@@ -615,7 +621,7 @@ The CLAN also correctly estimates the characteristics for least and most affecte
      \floatfoot{\textbf{Notes}: This figure reports simulation results for CLAN of the generic machine learning approach.
      For each of the four DGPs, it plots the distribution of the estimated characteristics for the first four covariates over the simulation runs.
      The dashed line indicates the true characteristics of the least and most affected group estimated from a large sample.
-     Sample size $N=10,000$ and $40$ simulation runs.
+     Sample size $n=10,000$ and $40$ simulation runs.
      }
 
 
@@ -624,7 +630,7 @@ The CLAN also correctly estimates the characteristics for least and most affecte
 \section{Conclusion}
 One of the main difficulties for extending this project besides computational feasibility is the creation of an informative DGP\@.
 While the approach taken above allows to control the dimension of the CATE, the covariate structure is of course highly stylized (no discrete covariates, all uniform, all independent).
-I think most promising would be a hybrid approach that combines a WGAN generated DGP for the covariates and treatment assignment, with an analytical treatment effect structure.
+I think most promising would be a hybrid approach that combines a WGAN-generated DGP for the covariates and treatment assignment, with an analytical treatment effect structure.
 This still poses the challenge, however, of coming up with a high-dimensional CATE function that makes sense economically.
 Eventually, this all boils down to the question, how high-dimensional and non-sparse our objects of interest really are.
 Lastly, when moving to low-dimensional summaries of the CATE functional, it would be useful to have decision-theoretic framework to evaluate.
