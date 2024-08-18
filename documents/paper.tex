@@ -1,5 +1,7 @@
 \documentclass[11pt, a4paper, leqno]{article}
-\usepackage{a4wide}
+\usepackage[margin=1in]{geometry}
+
+% \usepackage{a4wide}
 \usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
 % \usepackage{float} % Note: incompatible with floatrow
@@ -85,7 +87,7 @@
 \clearpage
 
 \section{Introduction}
-Estimating treatment effects has become a standard practice in applied econometris.
+Estimating treatment effects has become a standard practice in applied econometrics.
 Also, increasingly large datasets are utilized to investigate systematic heterogeneity.
 While this has the potential to increase our understanding of say the heterogneous effects of public policies,
 from a methodological perspective large datasets with many covariates come at the risk of increased researchers discretion.
@@ -620,13 +622,13 @@ The CLAN also correctly estimates the characteristics for least and most affecte
 \end{figure}
 
 \section{Conclusion}
-
-\begin{itemize}
-    \item Main difficulty: Informative DGP
-    \item Think of criterion relevant for decision
-    \item Computation power/time to run simulations
-    \item Combine WGAN and analytical CATE structure; still need to justify this.
-\end{itemize}
+One of the main difficulties for extending this project besides computational feasibility is the creation of an informative DGP\@.
+While the approach taken above allows to control the dimension of the CATE, the covariate structure is of course highly stylized (no discrete covariates, all uniform, all independent).
+I think most promising would be a hybrid approach that combines a WGAN generated DGP for the covariates and treatment assignment, with an analytical treatment effect structure.
+This still poses the challenge, however, of coming up with a high-dimensional CATE function that makes sense economically.
+Eventually, this all boils down to the question, how high-dimensional and non-sparse our objects of interest really are.
+Lastly, when moving to low-dimensional summaries of the CATE functional, it would be useful to have decision-theoretic framework to evaluate.
+This would allow to think more systematically about how to trade-off model approximations with statistical performance.
 
 \clearpage
 \newpage
