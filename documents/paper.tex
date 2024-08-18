@@ -85,8 +85,15 @@
 \clearpage
 
 \section{Introduction}
-
-
+Estimating treatment effects has become a standard practice in applied econometris.
+Also, increasingly large datasets are utilized to investigate systematic heterogeneity.
+While this has the potential to increase our understanding of say the heterogneous effects of public policies,
+from a methodological perspective large datasets with many covariates come at the risk of increased researchers discretion.
+In this case, machine learning methods to systematically explore heterogeneity can be helpful to ``tie the researchers hands''.
+Furthermore, in high-dimensional settings with a potentially large number of irrelevant covariates, regularization built-in to many machine learning methods is required to deliver useful results.
+However, one concern is that many machine learning methods, like the very popular causal forests proposed in~\cite{wager2018estimation}, to estimate conditional average tretment effects rely on a low-dimensional structure of the conditional effects.
+Another approach proposed in~\cite{chernozhukov2023genml} is to only estimate low-dimensional features of conditional effects but utilizing machine learning methods in a first-step prediction exercise.
+The current paper investigates the performance of these two approaches for data generating processes both with low- and high-dimensional conditional treatment effect structures.
 
 \section{Methods}
 
