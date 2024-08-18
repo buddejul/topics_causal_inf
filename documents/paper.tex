@@ -338,38 +338,38 @@ To avoid dependency conflicts with the other packages or manually debugging thei
 Throughout the simulations I use $n=10,000$ observations and $40$ simulation repetitions, corresponding to~\citet{wager2018estimation}.
 This low number is chosen to make the problem computationally feasible.
 I use $100$ trees in all causal forest estimators and a sub-sampling share of $0.2$.
-These parameters are much smaller than in the original~\citet{wager2018estimation} to reduce the run-time of the simulation.
+These parameters are much smaller than in the original simulations, again to reduce the run-time.
 I still find very similar results in the replication parts, as outlined below.
 I follow~\citet{wager2018estimation} and report the expected MSE and expected coverage for CATE estimation by evaluating the predictions of the estimator on a new sample, also of size $10,000$.
 Throughout, I construct confidence intervals with $95\%$ nominal coverage.
-To give an indication of noisiness coming from both a low number of simulations and approximating expected MSE and coverage, I also report the standard deviation of simulation runs.
+To give an indication of noisiness coming from both a low number of simulations and approximating expected MSE and coverage, I also report the standard deviation over simulation runs.
 For generic machine learning simulations I use a standard random forest as the baseline learner for $b_0(Z) = \E[Y(0)|Z]$ and a causal forest with similar hyperparameters as above for estimating $s_0(Z)$.
 When analysing group average treatment effects (GATES), I define five groups based on the treatment effect quintiles predicted by the ML proxy.
-To approximate the true GATES induced by the proxy I estimate this on a large sample of size $n=1,000,000$; as noted in the paper, if the size of the auxiliary sample diverges the randomness due to splitting and training the proxy can be ignored.
-I use a main, auxiliary splitshare of $0.5$ throughout the analysis.
+To approximate the true GATES (as well as BLP and CLAN) induced by the proxy I estimate this on a large sample of size $n=1,000,000$; as noted in the paper, if the size of the auxiliary sample diverges the randomness due to splitting and training the proxy can be ignored.
+For the classification analysis (CLAN) I consider average covariate characteristics as the target. I use a main, auxiliary splitshare of $0.5$ and aggregation over 10 splits throughout the analysis.
 
 \subsection{Results: WA Replication and WGAN}
 I report results for the causal forest approach in Table~\ref*{table:wa_rep_wgan}.
-First, the estimates for MSE --- using the true CATE function --- in column 2 are very close to the original results in~\citet{wager2018estimation}.
+First, the estimates for MSE --- using the true CATE function for evaluation --- in column 2 are very close to the original results in~\citet{wager2018estimation}.
 I find a MSE for 0.02 for $d=10$ with an SD smaller than 0.01 while they find MSE estimates ranging from 0.02 to 0.03 for dimensions ranging from 2 to 8 and a similar SD\@.
 Notably, when I increase the dimensions to 15 and 30, respectively, I find comparable MSE estimates.
 This shows, that causal forests are able to perform well in a sparse setting where the subset of covariates that are pure noise is potentially large.
-The fourth row reports in Panel A reports simulation results based on an intermediate WGAN generator.
-The MSE is more than three times as large as the directly simulated DGP when using the true CATE to compute the MSE (\textit{MSE True}), but delivers a similar MSE estimate when using an estimated CATE based on a large population draw (\textit{MSE Pop}).
-Hence, using a WGAN-generated DGP can in principle work well for simulation purposes when true CATE has a low-dimensional structure.
+The fourth row of Panel A reports simulation results based on an intermediate WGAN generator.
+The MSE is more than three times as large compared to sampling directly from the DGP when using the true CATE to compute the MSE (\textit{MSE True}), but delivers a similar MSE estimate when using an estimated CATE based on a large population draw (\textit{MSE Pop}).
+Hence, using a WGAN-generated DGP can in principle work well for simulation purposes when the true CATE has a low-dimensional structure.
 Turning to coverage in the last columns, I find that coverage is slightly above nominal level for all dimensions, which is different to the original results reported in~\citet{wager2018estimation}, who report coverage levels far below nominal level (e.g. 0.73 for $d=8$).
 % [TODO Wgan coverage level after new simulation run using estimated CATE.]
 
-Panels B and C report results for a CATE with higher dimension. As expected the performance of the Causal Forest significantly deteriorates.
+Panels B and C report results for a CATE with higher dimensionality. As expected, the performance of the Causal Forest significantly deteriorates.
 MSE significantly increases, in particular for Panel C where the CATE depends on 8 covariates.
-Even with only 4 covariates, coverage is sinificantly below the nominal level ranging from 0.83 to 0.76. For 8 covariates coverage is below 0.5 for all dimensions.
-The WGAN generator approach result in similar MSE estimates when using the estimated CATE to compute MSE (0.22 vs. 0.19 using the standard approach).
+Even with only 4 covariates, coverage is significantly below the nominal level ranging from 0.76 to 0.83. For 8 covariates coverage is below 0.5 for all dimensions.
+The WGAN generator approach results in similar MSE estimates when using the estimated CATE to compute MSE (0.22 vs. 0.19 using the standard approach).
 However, for the more complicated CATE in Panel C, the WGAN approach suggests an MSE that is far below the actual MSE using the standard approach (44.99 vs. 133.81).
 This is consistent with the previous argument, that the generator cannot preserve the high-dimensional structure. Hence, the CATE estimated based on a large population draw will be ``too simple''.
 For the remaining simulations using the generic machine learning approach I stick to the standard approach.
-Lastly, Panel D reports result for a Placebo CATE which is zero everywhere. The MSE is small and coverage is above nominal level.
-Hence I find no indication for the claim made in connection with Figure 1 in~\citet{chernozhukov2023genml}, that random forest machine learning estimators can easily suggest a heterogeneous CATE for a placebo DGP\@.
-\footnote{They, however, used a random forest directly (i.e.\ with a different target function and without modifications like honesty). Also, they probably reported out-of-the-box estimates which, since random forests are meant to address problems with more than one covariate, are prone to overfitting in this case. Using a random forest with cross-validation easily avoids overfitting.}
+Lastly, Panel D reports results for a Placebo CATE which is zero everywhere. The MSE is small and coverage is above nominal level.
+Hence I find no indication for the claim made in connection with Figure 1 in~\citet{chernozhukov2023genml}, that random forest machine learning estimators can easily suggest a heterogeneous CATE for a placebo DGP\@.\footnote{They, however, used a random forest directly (i.e.\ with a different target function and without modifications like honesty). Also, they probably reported out-of-the-box estimates which, since random forests are meant to address problems with more than one covariate, are prone to overfitting in this case. Using a random forest with cross-validation easily avoids overfitting.}
+
 \begin{table}
     \caption{Simulation Results: WA Replication and WGAN}\label{table:wa_rep_wgan}
     \begin{threeparttable}
@@ -416,7 +416,7 @@ I also use the trained model $s(z)$ from the median slope parameter to evaluate 
 While this approach does not directly target the CATE, it is still useful to evaluate the MSE\@.
 After all, if the MSE is justified by some decision-theoretic approach, we might wonder whether trading off model misspecification for estimation precision results in smaller loss.
 The results in Table~\ref*{table:generic_ml_cate} show that the MSE for estimating the true CATE is significantly worse compared to the causal forest approach.
-While the BLP is of course not linear in the original covaiates, it seems like the gain estimation precision might still be offset by the approximation.
+While the BLP is of course not linear in the original covariates, it seems like the gain in estimation precision might still be offset by the approximation.
 This is expected for DGPs with a low-dimensional CATE in which causal forests perform well (Panels A and B), but I would have expected a relatively better performance in Panel C.
 One potential concern is that I used too few sample splits (the paper suggests 250 instead of 10), but this was computationally not feasible at this point.
 The generic ML does in fact perform better in the placebo setting in Panel D, where the MSE is only a tenth compared to that of the causal forest.
@@ -426,17 +426,17 @@ Table~\ref*{table:generic_ml_coverage} verifies coverage properties of the gener
 Groups for GATES are defined by quintiles of predicted treatment effects from low ($\mu_1$) to high ($\mu_5$).
 I mostly find coverage levels close to the nominal level of 95\%, although with only 40 simulation runs the accuracy is of course severely limited.
 In particular, GATES and $\beta_1$ (corresponding to the ATE) have (near) correct coverage in most cases except for the very high-dimensional setting where coverage declines significantly for some parameters. Notably, $\beta_2$ has coverage of $0\%$ or close to it for almost all settings.
-To investigate this further, Figure~\ref*{fig:blp} plots the distribution of the lower and upper confidence interval points for both all four DGPs and both BLP parameters.
+To investigate this further, Figure~\ref*{fig:blp} plots the distribution of the lower and upper confidence interval points for both BLP parameters and all four DGPs.
 While endpoints are to the left and right of $\beta_1$ in most cases except the high-dimensional ones, $\beta_2$ is always over-estimated.
 At this point I don't have a good explanation for this. Note the true parameter is always almost equal to $1$, since we have a highly heterogeneous treatment effects (except for the placebo setting).
 Hence, this could be a parameter at the boundary issue.
 
 Figure~\ref*{fig:gates} illustrates the performance of the GATES procedure for the four different DGPs\@.
 It shows the distribution of the estimates from the 40 simulation runs against an estimate of the true GATES from a large ($n=1,000,000$) sample draw.
-While quantitatively not precise, we can still see that generic ML procedure correctly estimates almost all GATES for all four DGPs.
+While quantitatively not precise, we can still see that the generic ML procedure correctly estimates almost all GATES for all four DGPs.
 This is true even for the DGPs with increased heterogeneity dimension, as well as the placebo, where estimates are tightly centered around 0.
 
-Lastly, Figure~\ref*{fig:clans} shows estimates for the characteristics --- limited to covariates $x_1, \ldots, x_4$ --- of the least and most affected groups as predited by the ML proxy.
+Lastly, Figure~\ref*{fig:clans} shows estimates for the mean characteristics --- limited to covariates $x_1, \ldots, x_4$ --- of the least and most affected groups as predited by the ML proxy.
 If the CATE function does not depend on a covariate, the uniform distribution implies that the average characteristic for both groups is 0.5.
 This is confirmed in both Panels A (where $x_3$ and $x_4$ are noise) and the placebo DGP in Panel D (where all covariates are noise).
 The CLAN also correctly estimates the characteristics for least and most affected groups for covariates that determine heterogeneity, which can be seen in Panel A (for $x_3, x_4$) as well as Panels B and C.
@@ -633,7 +633,7 @@ While the approach taken above allows to control the dimension of the CATE, the 
 I think most promising would be a hybrid approach that combines a WGAN-generated DGP for the covariates and treatment assignment, with an analytical treatment effect structure.
 This still poses the challenge, however, of coming up with a high-dimensional CATE function that makes sense economically.
 Eventually, this all boils down to the question, how high-dimensional and non-sparse our objects of interest really are.
-Lastly, when moving to low-dimensional summaries of the CATE functional, it would be useful to have decision-theoretic framework to evaluate.
+Lastly, when moving to low-dimensional summaries of the CATE functional, it would be useful to have a decision-theoretic framework to evaluate the performance of approaches with different targets, but for the same decision problem.
 This would allow to think more systematically about how to trade-off model approximations with statistical performance.
 
 \clearpage
