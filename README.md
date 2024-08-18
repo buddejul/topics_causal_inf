@@ -1,30 +1,55 @@
 # Topics Causal Inference
 
-## Paper Structure
+Replication repository for Causal Inference Topics Course Summer Semester 2024.
 
-### Section 1 - Designing a high-dimensional DGP
+## Instructions
 
-Simulation results
+To run the replication, Python has to be installed on the system.
 
-- Replication DGP 3 WA 2018
-- Extension DGP 4 with a larger number of covariates
-- d = 8, 15, 30
-- settings: 40 reps, 200 trees (for speed, also show SD)
-- For all DGPs: Also show for simulation based on WGAN
-  - Evaluate using true CATE; in principle, should be able to estimate this because for
-    any DGP
+First, after cloning the repository, create the virtual environment by typing
 
-### Section 2
+```shell
+mamba env create
+```
 
-- Important question: How do we evaluate?
-  - Also RMSE or Coverage of true function, if that's what we care about in the end
-  - Would need to think about some decision criterion (RMSE --> Squared loss.)
-  - Look at missclassification error!
-- Do generic_ml with the same causal forest method; maybe also Lass/Elastic net (with
-  CV)
+in the shell. Note the current path of the shell needs to be the cloned repository.
 
-### TODO
+For building the project, I use a workflow management system called
+[`pytask`](https://pytask-dev.readthedocs.io/en/stable/). `pytask` facilitates
+reproducible analysis by automatically discovering tasks and evaluating tasks only when
+the code or dependencies have changed.
 
-- Implement causal forest with generic_ml
-- Coverage in addition to RMSE
-- Add "mixed" DGP where only the CATE is specified
+To build the project, first activate the virtual environment and then run the build:
+
+```shell
+conda activate topics_causal_inf
+pytask
+```
+
+However, it is advised to run the tasks collected by `pytask` in parallel by specifying
+
+```shell
+pytask -n [n_workers]
+
+# Alternative: Starts os.cpu_count() - 1 workers.
+pytask -n auto
+```
+
+With 11 workers on my private computer, execution took about 90 minutes. To reduce
+runtime, the simulation settings in `config.py` might be changed.
+
+In particular,
+
+```python
+N_SIM = 40
+N_SPLITS = 10
+```
+
+control the number of total simulation runs as well as the number of splits for the
+generic ML procedure.
+
+Note that I generated the inputs to the WGAN-based simulations externally on a Google
+Colab server. The results have to be stored under
+`src\topics_causal_inf\wgan_generated\`. Alternatively,
+`DG_TO_RUN = ["standard", "wgan"]` in `task_wa_replication.py` has to be changed (i.e.
+remove `"wgan"`).
