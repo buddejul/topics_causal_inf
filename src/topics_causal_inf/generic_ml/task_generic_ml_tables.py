@@ -87,6 +87,15 @@ for id_, kwargs in ID_TO_KWARGS_COVERAGE.items():
         # Load results
         res = pd.concat([pd.read_pickle(path) for path in path_to_res])
 
+        for beta in ["beta_1", "beta_2"]:
+            if (res[f"blp_ci_lo_{beta}"] > res[f"blp_ci_hi_{beta}"]).mean() == 1:
+                res = res.rename(
+                    columns={
+                        f"blp_ci_lo_{beta}": f"blp_ci_hi_{beta}",
+                        f"blp_ci_hi_{beta}": f"blp_ci_lo_{beta}",
+                    },
+                )
+
         for i in range(5):
             res[f"covers_gate_{i}"] = (
                 res[f"gate_ci_lo_{i}"] < res[f"true_gate_{i}"]
@@ -99,8 +108,8 @@ for id_, kwargs in ID_TO_KWARGS_COVERAGE.items():
 
         # Create table
         # Get mean for all covers_gate_i and covers_blp_beta_i, each separately
-        params = [f"gate_{i}" for i in range(5)] + [
-            f"blp_{beta}" for beta in ["beta_1", "beta_2"]
+        params = [f"blp_{beta}" for beta in ["beta_1", "beta_2"]] + [
+            f"gate_{i}" for i in range(5)
         ]
 
         table = res.groupby(["dim"]).apply(

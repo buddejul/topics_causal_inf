@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, NamedTuple
 
 import numpy as np
 import pandas as pd  # type: ignore[import-untyped]
@@ -9,8 +9,15 @@ from plotly.subplots import make_subplots  # type: ignore[import-untyped]
 from pytask import Product, task
 
 from topics_causal_inf.classes import DGP
-from topics_causal_inf.config import BLD, DGPS_TO_RUN
+from topics_causal_inf.config import BLD, DGPS_TO_RUN, DIMS_TO_RUN
 from topics_causal_inf.generic_ml.task_generic_ml_sim import ID_TO_KWARGS
+
+
+class _Arguments(NamedTuple):
+    path_to_plot: Path
+    dgp: DGP
+    path_to_res: list[Path]
+
 
 PATHS_TO_RESULTS = [args.path_to_res for _, args in ID_TO_KWARGS.items()]
 
@@ -164,6 +171,81 @@ for _id, kwargs in ID_TO_KWARGS_CLANS.items():
 
         fig.update_traces(opacity=0.75)
 
+        fig.update_layout(
+            showlegend=False,
+        )
+
+        fig.update_layout(margin={"l": 10, "r": 10, "t": 10, "b": 10})
+
+        fig.write_image(path_to_plot)
+
+
+ID_TO_KWARGS_COVERAGE = {
+    f"{dgp.name}_blp_gates_coverage": _Arguments(
+        path_to_plot=BLD
+        / "generic_ml"
+        / "plots"
+        / f"generic_ml_blp_distribution_{dgp.name}.png",
+        dgp=dgp,
+        path_to_res=[
+            BLD / "generic_ml" / "sims" / f"generic_ml_{dgp.name}_dim{dim}.pkl"
+            for dim in DIMS_TO_RUN
+        ],
+    )
+    for dgp in DGPS_TO_RUN
+}
+
+
+for id_, kwargs in ID_TO_KWARGS_COVERAGE.items():  # type: ignore[assignment]
+
+    @task(id=id_, kwargs=kwargs)  # type: ignore[arg-type]
+    def task_generic_ml_blp_params(
+        path_to_res: list[Path],
+        dgp: DGP,
+        path_to_plot: Annotated[Path, Product],
+    ) -> None:
+        """Task for generic_ml BLP params plot."""
+        # Load results
+        res = pd.concat([pd.read_pickle(path) for path in path_to_res])
+
+        res = res[res["dgp"] == dgp.name]
+
+        fig = make_subplots(rows=1, cols=2)
+
+        for beta in ["beta_1", "beta_2"]:
+            i = 1 if beta == "beta_1" else 2
+
+            color_lo = px.colors.qualitative.Plotly[0]
+            color_hi = px.colors.qualitative.Plotly[1]
+
+            fig.add_trace(
+                go.Histogram(
+                    x=res[f"blp_ci_lo_{beta}"],
+                    histnorm="probability",
+                    name=beta,
+                    marker_color=color_lo,
+                ),
+                row=1,
+                col=i,
+            )
+            fig.add_trace(
+                go.Histogram(
+                    x=res[f"blp_ci_hi_{beta}"],
+                    histnorm="probability",
+                    name=beta,
+                    marker_color=color_hi,
+                ),
+                row=1,
+                col=i,
+            )
+            fig.add_vline(
+                x=np.mean(res[f"true_blp_{beta}"]),
+                line_dash="dash",
+                row=1,
+                col=i,
+            )
+
+        # Save
         fig.update_layout(
             showlegend=False,
         )

@@ -2,6 +2,12 @@
 
 Replication repository for Causal Inference Topics Course Summer Semester 2024.
 
+The repository follows the `src/bld` structure. All input (source) files generating
+outputs are stored in the `src` folder. All generated output (see below for
+instructions) will be stored in the `bld` folder. The project is completely replicable
+based on the provided repository, with the exemption of the generated WGAN files
+(details see below).
+
 ## Instructions
 
 To run the replication, Python has to be installed on the system.
@@ -35,8 +41,8 @@ pytask -n [n_workers]
 pytask -n auto
 ```
 
-With 11 workers on my private computer, execution took about 90 minutes. To reduce
-runtime, the simulation settings in `config.py` might be changed.
+With 11 workers on my private computer, building the full project takes about 90
+minutes. To reduce runtime, the simulation settings in `config.py` might be changed.
 
 In particular,
 
@@ -53,3 +59,6 @@ Colab server. The results have to be stored under
 `src\topics_causal_inf\wgan_generated\`. Alternatively,
 `DG_TO_RUN = ["standard", "wgan"]` in `task_wa_replication.py` has to be changed (i.e.
 remove `"wgan"`).
+
+Note: Sometimes the compilation of the LaTeX document fails on the first try, but
+rerunning `pytask` then usually works. Else, this step can just be ignored.

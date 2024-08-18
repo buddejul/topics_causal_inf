@@ -296,7 +296,7 @@ I keep the rest of the DGP the same. Finally I also consider a \textit{placebo} 
 \end{equation*}
 The first two extensions are used to investigate the performance of the causal forest and generic machine learning approach when heterogeneity is high-dimensional.
 The placebo extension is used to investigate the danger of over-fitting where machine learning algorithms might be predict a heterogeneous treatment effect when there is actually none.
-A similar question is investigated in Figure 1 of~\cite{chernozhukov2023genml}.
+A similar question is analyzed in Figure 1 of~\cite{chernozhukov2023genml}.
 
 \paragraph*{WGAN Approximation}
 For generating the WGAN approximation to the DGP I follow the baseline approach described in ds-wgan package example.
@@ -410,7 +410,12 @@ The generic ML does in fact perform better in the placebo setting in Panel D, wh
 Table~\ref*{table:generic_ml_coverage} verifies coverage properties of the generic ML procedure for both BLP parameters $\beta_1, \beta_2$ and GATES $\mu_1, \ldots, \mu_5$.
 Groups for GATES are defined by quintiles of predicted treatment effects from low ($\mu_1$) to high ($\mu_5$).
 I mostly find coverage levels close to the nominal level of 95\%, although with only 40 simulation runs the accuracy is of course severely limited.
-% TODO describe coverage properties, currently some seem off?
+In particular, GATES and $\beta_1$ (corresponding to the ATE) have (near) correct coverage in most cases except for the very high-dimensional setting where coverage declines significantly for some parameters. Notably, $\beta_2$ has coverage of $0\%$ or close to it for almost all settings.
+To investigate this further, Figure~\ref*{fig:blp} plots the distribution of the lower and upper confidence interval points for both all four DGPs and both BLP parameters.
+While endpoints are to the left and right of $\beta_1$ in most cases except the high-dimensional ones, $\beta_2$ is always over-estimated.
+At this point I don't have a good explanation for this. Note the true parameter is always almost equal to $1$, since we have a highly heterogeneous treatment effects (except for the placebo setting).
+Hence, this could be a parameter at the boundary issue.
+
 Figure~\ref*{fig:gates} illustrates the performance of the GATES procedure for the four different DGPs\@.
 It shows the distribution of the estimates from the 40 simulation runs against an estimate of the true GATES from a large ($N=1,000,000$) sample draw.
 While quantitatively not precise, we can still see that generic ML procedure correctly estimates almost all GATES for all four DGPs.
@@ -499,6 +504,42 @@ The CLAN also correctly estimates the characteristics for least and most affecte
     \end{threeparttable}
 \end{table}
 
+% BLP Figure
+\begin{figure}
+    \caption{Simulation Results: Generic ML --- BLP Confidence Intervals}\label{fig:blp}
+
+    \centering
+     \begin{subfigure}[b]{0.475\textwidth}
+         \centering
+         \includegraphics[width=\textwidth]{../bld/generic_ml/plots/generic_ml_blp_distribution_dgp3.png}
+         \caption{Original WA DGP 3 --- 2 Covariate CATE}\label{fig_blp:dgp3}
+     \end{subfigure}
+     \hfill
+     \begin{subfigure}[b]{0.475\textwidth}
+         \centering
+         \includegraphics[width=\textwidth]{../bld/generic_ml/plots/generic_ml_blp_distribution_dgp4.png}
+         \caption{High-dimensional --- 4 Covariate CATE}\label{fig_blp:dgp4}
+     \end{subfigure}
+
+     \begin{subfigure}[b]{0.475\textwidth}
+         \centering
+         \includegraphics[width=\textwidth]{../bld/generic_ml/plots/generic_ml_blp_distribution_dgp5.png}
+         \caption{High-dimensional --- 8 Covariate CATE}\label{fig_blp:dgp5}
+     \end{subfigure}
+     \begin{subfigure}[b]{0.475\textwidth}
+         \centering
+         \includegraphics[width=\textwidth]{../bld/generic_ml/plots/generic_ml_blp_distribution_dgp6.png}
+         \caption{Placebo}\label{fig_blp:dgp6}
+     \end{subfigure}
+
+     \floatfoot{\textbf{Notes}: This figure reports simulation results for confidence intervals of BLP parameters of the generic machine learning approach.
+     For each of the four DGPs, it plots the distribution of both lower and upper confidence intervals for $\beta_1, \beta_2$ over the simulation runs.
+     Lower ends are displayed red, upper blue.
+     The dashed line indicates the true GATES using a large population draw. Sample size $N=10,000$ and $40$ simulation runs.
+     }
+
+\end{figure}
+
 % Gates Figure
 \begin{figure}
     \caption{Simulation Results: Generic ML --- GATES}\label{fig:gates}
@@ -534,7 +575,7 @@ The CLAN also correctly estimates the characteristics for least and most affecte
 
 \end{figure}
 
-% Gates Figure
+% CLANS Figure
 \begin{figure}
     \caption{Simulation Results: Generic ML --- CLANS}\label{fig:clans}
 
